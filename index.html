@@ -323,6 +323,10 @@
     background:var(--cyan); color:var(--bg); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px;
   }
 
+  .beta-panel{margin:14px 16px 0; padding:13px; background:rgba(240,168,64,0.06);
+              border:1px solid rgba(240,168,64,0.35);}
+  .beta-panel .cta{display:block; text-align:center; text-decoration:none;}
+
   .feature-card{
     display:flex; gap:13px; align-items:flex-start; margin:10px 16px;
     background:var(--panel); border:1px solid var(--line); padding:14px; cursor:pointer;
@@ -3277,6 +3281,20 @@ function renderHome(){
     <div style="padding:14px 16px 0; display:flex; gap:8px;">
       <button class="cta" id="replay-tutorial" style="flex:1;">▶ TUTORIAL</button>
       <button class="cta" id="how-to-install" style="flex:1;">📲 INSTALL GUIDE</button>
+    </div>
+
+    <div class="beta-panel">
+      <div class="ex-title" style="color:var(--amber);">Beta — feedback wanted</div>
+      <div class="ex-body">
+        VERSEDEX is new and still rough in places. If something looks wrong, breaks, or is just
+        annoying to use, please say so — it's far more useful than silence.
+        <br><br>
+        <strong>Your hangar is saved on this device only.</strong> It won't sync to another phone or
+        computer, and clearing your browser data will wipe it. Install to your home screen to keep it safe.
+      </div>
+      <a class="cta primary" style="margin-top:11px;" href="https://discord.com/invite/749GcenQs" target="_blank" rel="noopener">
+        💬 REPORT AN ISSUE ON DISCORD ↗
+      </a>
     </div>
 
     <div class="footnote" style="padding-top:14px;">
