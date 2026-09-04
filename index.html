@@ -2621,6 +2621,27 @@ async function loadRoutes(){
       WAST: Nyx Gateway (Stanton) ▶ Everus Harbor = Up to 55M UEC •
       ... • All values are estimated"
    Each route segment is:  CODE: Origin ▶ Destination = Up to <value> */
+/* UEX abbreviates commodities to short codes in the routes feed. This maps the
+   ones we're confident about; anything unmapped falls through and displays the
+   raw code rather than guessing at a name. */
+const COMMODITY_NAMES = {
+  WAST:'Waste', TITA:'Titanium', RMC:'Recycled Material Composite', HELI:'Helium',
+  AGRI:'Agricultural Supplies', ALUM:'Aluminium', QUAN:'Quantanium', LARA:'Laranite',
+  GOLD:'Gold', DIAM:'Diamond', BERY:'Beryl', COPP:'Copper', CORU:'Corundum',
+  HEPH:'Hephaestanite', TUNG:'Tungsten', IRON:'Iron', SCRA:'Scrap',
+  MEDS:'Medical Supplies', STIM:'Stims', DIST:'Distilled Spirits',
+  PROC:'Processed Food', HYDR:'Hydrogen Fuel', CHLO:'Chlorine', FLUO:'Fluorine',
+  IODI:'Iodine', ASTA:'Astatine', TUNGS:'Tungsten', QUARTZ:'Quartz',
+  SILI:'Silicon', BORA:'Borase', TIN:'Tin', STEE:'Steel', COMP:'Compboard',
+  ARGO:'Argon', CARB:'Carbon', OSMI:'Osmium'
+};
+
+function commodityLabel(code){
+  if(!code) return null;
+  const key = String(code).toUpperCase();
+  return COMMODITY_NAMES[key] || null;
+}
+
 function parseUexRoutes(text){
   const segments = String(text).split(/\s*[•·]\s*/).map(x=>x.trim()).filter(Boolean);
   const routes = [];
@@ -2715,15 +2736,22 @@ function renderRoutesTool(){
       routesBlock = `
         <div class="section-label">Top routes (live via UEX)</div>
         ${parsed.title ? `<div class="tool-note" style="padding-top:0;">${esc(parsed.title)} · ${sorted.length} routes</div>` : ''}
-        ${sorted.map((r,i)=>`
+        ${sorted.map((r,i)=>{
+          const label = commodityLabel(r.code);
+          return `
           <div class="eff-row">
             <div class="eff-rank">${String(i+1).padStart(2,'0')}</div>
             <div style="flex:1; min-width:0;">
-              <div class="eff-name">${r.code ? esc(r.code) + ' ' : ''}<span style="color:var(--muted); font-weight:600; font-size:12px;">${esc(r.origin)}</span></div>
-              <div class="eff-sub">▶ ${esc(r.destination)}</div>
+              <div class="eff-name">${label ? esc(label) : (r.code ? esc(r.code) : 'Unknown')}</div>
+              <div class="eff-sub">${esc(r.origin)} ▶ ${esc(r.destination)}</div>
+              ${!label && r.code ? `<div class="eff-sub" style="color:#5a6b7d;">UEX code: ${esc(r.code)}</div>` : ''}
             </div>
-            <div class="eff-metric" style="font-size:13px;">${esc(r.value.replace(/^Up to\s*/i,''))}</div>
-          </div>`).join('')}
+            <div style="text-align:right;">
+              <div class="eff-metric" style="font-size:13px;">${esc(r.value.replace(/^Up to\s*/i,''))}</div>
+              <div class="eff-sub" style="font-size:9.5px;">max return</div>
+            </div>
+          </div>`;
+        }).join('')}
         <div class="tool-note">
           Commodity codes are UEX abbreviations (e.g. WAST, TITA, RMC, HELI). Values are the maximum
           estimated return for a full run, not profit per SCU — check UEX directly for margins and
@@ -2744,9 +2772,25 @@ function renderRoutesTool(){
     routesBlock = `<div style="padding:14px 16px;"><button id="routes-load" class="cta primary">LOAD LIVE ROUTES</button></div>`;
   }
 
+  const biggest = owned.length ? owned[0] : null;
+
   body.innerHTML = `
-    <div class="tool-intro">
-      Live top trade routes from UEX, alongside your own cargo ships so you can match a run to a hull.
+    <div class="explainer">
+      <div class="ex-title">Read this before trusting the numbers</div>
+      <div class="ex-body">
+        These are UEX's current best routes. The figure on the right is the
+        <strong>maximum total return</strong> for that route — what you'd make if you filled a very large
+        hold and sold the lot.
+        <br><br>
+        <strong>It is not profit per SCU, and it doesn't tell you how much cargo you need.</strong>
+        UEX doesn't publish the assumed capacity in this feed, so a 55M route might need thousands of SCU
+        you can't carry. Your actual return scales with what your ship holds.
+        ${biggest ? `<br><br>Your largest hauler is the <strong style="color:var(--cyan);">${esc(biggest.name)}</strong>
+        at ${fmt(biggest.cargoSCU)} SCU — treat these totals as a ceiling well above what one run in it would earn.`
+        : `<br><br>Add cargo ships to your hangar and VERSEDEX will show your capacity here for comparison.`}
+        <br><br>For actual margins per SCU and how much stock a terminal holds, open the route on
+        <a href="https://uexcorp.space" target="_blank" rel="noopener" style="color:var(--cyan);">UEX</a>.
+      </div>
     </div>
     ${routesBlock}
     ${hangarBlock}
