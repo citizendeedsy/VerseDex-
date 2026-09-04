@@ -911,6 +911,10 @@ let sortKey = "name";
 let viewingHangar = false;
 let hangarIds = new Set();
 let hangarAvailable = true;
+/* Feedback link. Discord invites expire unless created with "Never expire"
+   and unlimited uses — regenerate from the #versedex channel if it dies. */
+const FEEDBACK_URL = 'https://discord.gg/qwnvMyG8Mq';
+
 const TUTORIAL_SEEN_KEY = 'versedex_tutorial_seen_v1';
 let tutStep = 0;
 
@@ -3292,7 +3296,7 @@ function renderHome(){
         <strong>Your hangar is saved on this device only.</strong> It won't sync to another phone or
         computer, and clearing your browser data will wipe it. Install to your home screen to keep it safe.
       </div>
-      <a class="cta primary" style="margin-top:11px;" href="https://discord.com/invite/749GcenQs" target="_blank" rel="noopener">
+      <a class="cta primary" style="margin-top:11px;" href="${FEEDBACK_URL}" target="_blank" rel="noopener">
         💬 REPORT AN ISSUE ON DISCORD ↗
       </a>
     </div>
