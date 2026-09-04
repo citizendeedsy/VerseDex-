@@ -1,0 +1,3725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERSEDEX // Ship Registry</title>
+<meta name="description" content="A live, searchable reference of every Star Citizen ship and vehicle — specs, loadouts, pledge prices, and a personal hangar tracker.">
+<meta property="og:title" content="VERSEDEX — Star Citizen Ship Registry">
+<meta property="og:description" content="A live, searchable reference of every Star Citizen ship and vehicle — specs, loadouts, pledge prices, and a personal hangar tracker.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230a0e13'/%3E%3Crect x='7' y='7' width='10' height='10' fill='%234fd8e8'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0a0e13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VERSEDEX">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230a0e13'/%3E%3Cellipse cx='90' cy='90' rx='62' ry='23' fill='none' stroke='%234fd8e8' stroke-width='5'/%3E%3Cellipse cx='90' cy='90' rx='62' ry='23' fill='none' stroke='%234fd8e8' stroke-width='5' opacity='0.5' transform='rotate(-58 90 90)'/%3E%3Ccircle cx='90' cy='90' r='25' fill='%230a0e13' stroke='%234fd8e8' stroke-width='4'/%3E%3Ccircle cx='152' cy='90' r='6' fill='%23f0a840'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e13; --panel:#111820; --panel-2:#161f29; --line:#22303c;
+    --cyan:#4fd8e8; --amber:#f0a840; --text:#e6edf2; --muted:#728192; --red:#e85a5a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+  body{
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(79,216,232,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(240,168,64,0.05), transparent 45%);
+    min-height:100vh; padding-bottom:40px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(10,14,19,0.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); padding:14px 16px 10px;
+    max-height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+  .brand{display:flex; align-items:baseline; gap:8px;}
+  .brand .mark{width:9px;height:9px;background:var(--cyan);box-shadow:0 0 8px var(--cyan); flex-shrink:0;}
+  .brand h1{font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:2px; font-size:18px; margin:0; text-transform:uppercase;}
+  .brand h1 span{color:var(--cyan);}
+  .brand .count{margin-left:auto; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);}
+  .sub{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px;}
+
+  .header-actions{display:flex; gap:8px; margin-top:10px;}
+  .toolbar{display:flex; gap:6px; margin-top:10px;}
+
+  /* ---- Top navigation ---- */
+  #top-nav{
+    display:flex; gap:0; margin-top:10px;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  }
+  .nav-item{
+    flex:1; position:relative; background:none; border:none; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 4px 7px; color:var(--muted);
+    font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:0.8px;
+  }
+  .nav-item svg{width:19px; height:19px;}
+  .nav-item.active{color:var(--cyan);}
+  .nav-item.active::after{
+    content:''; position:absolute; bottom:-1px; left:20%; right:20%; height:2px; background:var(--cyan);
+  }
+  .nav-badge{
+    position:absolute; top:3px; right:50%; transform:translateX(19px);
+    background:var(--amber); color:var(--bg); font-size:8.5px; font-weight:700;
+    min-width:15px; padding:1px 4px; border-radius:7px; line-height:1.4;
+  }
+  .nav-badge.empty{display:none;}
+  .nav-dot{
+    position:absolute; top:6px; right:50%; transform:translateX(16px);
+    width:6px; height:6px; border-radius:50%; background:var(--amber);
+  }
+  .nav-dot.seen{display:none;}
+
+  /* Keep clear of the Netlify badge in the bottom-right corner */
+  body{padding-bottom:64px;}
+  #detail, #compare-view, #tools-view{padding-bottom:64px;}
+  #compare-bar{bottom:16px; right:96px;}
+  .tb-btn{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Share Tech Mono',monospace; font-size:10.5px; letter-spacing:0.5px;
+    text-transform:uppercase; cursor:pointer; padding:9px 10px; flex:0 0 auto;
+  }
+  .tb-btn.tb-primary{flex:1 1 auto;}
+  .tb-btn#hangar-toggle{flex:1 1 auto;}
+  .tb-btn.active{background:var(--cyan); color:var(--bg); border-color:var(--cyan); font-weight:700;}
+  .tb-badge{
+    background:rgba(255,255,255,0.14); padding:1px 6px; font-size:9.5px; min-width:16px; text-align:center;
+  }
+  .tb-btn.active .tb-badge{background:rgba(10,14,19,0.25);}
+  .tb-btn#adv-filter-toggle .tb-badge{background:var(--amber); color:var(--bg); font-weight:700;}
+  .hangar-toggle-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); padding:9px 12px;
+    font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  }
+  .icon-btn{
+    flex:0 0 46px; display:flex; align-items:center; justify-content:center;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); font-size:16px; cursor:pointer;
+  }
+  .icon-btn:active{background:var(--panel-2);}
+  .hangar-toggle-btn.active{background:var(--cyan); color:var(--bg); border-color:var(--cyan); font-weight:700;}
+  .hangar-toggle-btn svg{flex-shrink:0;}
+  .hangar-count-badge{
+    background:rgba(255,255,255,0.12); color:inherit; padding:1px 7px; font-size:10px; min-width:18px; text-align:center;
+  }
+  .hangar-toggle-btn.active .hangar-count-badge{background:rgba(10,14,19,0.25);}
+
+  .searchbar{margin-top:12px; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); padding:9px 12px;}
+  .searchbar input{flex:1; background:none; border:none; outline:none; color:var(--text); font-family:'Inter',sans-serif; font-size:14px;}
+  .searchbar input::placeholder{color:var(--muted);}
+
+  .filters{display:flex; gap:6px; margin-top:10px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none;}
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{flex-shrink:0; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:0.5px; color:var(--muted); border:1px solid var(--line); padding:6px 11px; cursor:pointer; text-transform:uppercase; white-space:nowrap; background:transparent;}
+  .chip.active{color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700;}
+
+  .sort-row{display:flex; align-items:center; gap:8px; margin-top:10px;}
+  .sort-row select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text); font-family:'Share Tech Mono',monospace;
+    font-size:11px; padding:6px 8px; flex:1;
+  }
+
+  .range-filters{margin-top:10px; display:flex; flex-direction:column; gap:8px;}
+  .range-filters label{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; display:flex; flex-direction:column; gap:4px;}
+  .range-filters label span{color:var(--cyan);}
+  .range-filters input[type="range"]{width:100%; accent-color:var(--cyan); height:20px;}
+
+  .adv-filter-panel{
+    display:none; margin-top:8px; padding:12px; background:var(--panel); border:1px solid var(--line);
+    flex-direction:column; gap:12px;
+    max-height:65vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;  /* stops the page behind scrolling instead */
+  }
+  .adv-filter-panel.visible{display:flex;}
+  .adv-panel-head{
+    position:sticky; top:-12px; margin:-12px -12px 0; padding:10px 12px; z-index:2;
+    background:var(--panel-2); border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--cyan);
+  }
+  .adv-close-btn{
+    background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer;
+    font-family:'Share Tech Mono',monospace; font-size:10px; padding:4px 8px;
+  }
+  .adv-row{display:flex; flex-direction:column; gap:6px;}
+  .adv-label{font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;}
+  .adv-select{background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:11px; padding:7px 8px;}
+  .adv-checks{flex-direction:row; gap:16px; flex-wrap:wrap;}
+  .adv-check{display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:12px; color:var(--text);}
+  .adv-check input{accent-color:var(--cyan); width:15px; height:15px;}
+
+  .hangar-summary{margin:12px 16px 0; padding:12px; background:var(--panel-2); border:1px solid var(--line); display:none;}
+  .hangar-summary.visible{display:block;}
+  .hangar-summary .hs-row{display:flex; justify-content:space-between; align-items:center;}
+  .hangar-summary .hs-value{font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; color:var(--amber);}
+  .hangar-summary .hs-label{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;}
+  .hangar-summary .hs-copy{
+    margin-top:10px; width:100%; padding:8px; background:none; border:1px solid var(--cyan); color:var(--cyan);
+    font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  }
+
+  .similar-list{padding:0 16px; display:flex; flex-direction:column; gap:6px;}
+  .similar-row{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); padding:8px 10px; cursor:pointer;}
+  .similar-row:active{background:var(--panel-2);}
+  .sim-thumb{width:38px;height:38px;flex-shrink:0; background:var(--panel-2); border:1px solid var(--line);
+             overflow:hidden; display:flex;align-items:center;justify-content:center;
+             font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--muted);font-size:11px;}
+  .sim-thumb img{width:100%;height:100%;object-fit:cover; display:block;}
+  /* Safety net: nothing inside a data row may overflow it */
+  .eff-row, .similar-row, .row{overflow:hidden;}
+  .similar-row .sim-name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13.5px;}
+  .similar-row .sim-meta{font-size:10.5px; color:var(--muted); margin-top:1px;}
+
+  #status-banner{margin:12px 16px 0; padding:9px 11px; font-size:11px; font-family:'Share Tech Mono',monospace; border:1px solid var(--line); display:none;}
+  #status-banner.loading{display:block; color:var(--cyan); border-color:rgba(79,216,232,0.35); background:rgba(79,216,232,0.06);}
+  #status-banner.error{display:block; color:var(--amber); border-color:rgba(240,168,64,0.35); background:rgba(240,168,64,0.06);}
+  #status-banner.ok{display:block; color:#7ce89a; border-color:rgba(124,232,154,0.35); background:rgba(124,232,154,0.06);}
+
+  #list{padding:14px 16px 4px; display:flex; flex-direction:column; gap:8px;}
+  .row{display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); padding:10px; cursor:pointer;}
+  .row:active{background:var(--panel-2);}
+  .row .thumb{width:52px;height:52px;flex-shrink:0; background:var(--panel-2); border:1px solid var(--line); overflow:hidden; display:flex;align-items:center;justify-content:center; font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--muted);font-size:14px;}
+  .row .thumb img{width:100%;height:100%;object-fit:cover;}
+  .row .info{flex:1; min-width:0;}
+  .row .name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:16px; line-height:1.1;}
+  .row .manu{font-size:11px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row .role{font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--cyan); letter-spacing:1px; text-transform:uppercase; border:1px solid rgba(79,216,232,0.35); padding:2px 6px; flex-shrink:0; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row .hangar-star{
+    flex-shrink:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer; padding:0;
+  }
+  .row .hangar-star.in-hangar{color:var(--amber); border-color:rgba(240,168,64,0.5);}
+  .row .compare-btn{
+    flex-shrink:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer; padding:0; font-size:13px;
+    font-family:'Share Tech Mono',monospace;
+  }
+  .row .compare-btn.selected{color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700;}
+  .empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:12px; line-height:1.8;}
+
+  #compare-bar{
+    position:fixed; left:16px; right:16px; bottom:16px; z-index:52;
+    background:var(--cyan); color:var(--bg); border:1px solid var(--cyan);
+    display:none; align-items:center; justify-content:space-between; padding:12px 16px;
+    font-family:'Share Tech Mono',monospace; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  }
+  #compare-bar.visible{display:flex;}
+  #compare-bar .cb-clear{
+    font-size:11px; font-weight:500; color:var(--bg); opacity:0.75; background:none; border:none;
+    text-decoration:underline; padding:4px; cursor:pointer; font-family:inherit;
+  }
+
+  #compare-view{position:fixed; inset:0; background:var(--bg); z-index:55; transform:translateY(100%); transition:transform 0.28s ease; overflow-y:auto;}
+  #compare-view.open{transform:translateY(0);}
+  .cmp-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .cmp-grid{display:grid; min-width:max-content;}
+  .cmp-row{display:contents;}
+  .cmp-cell{padding:10px 12px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); font-size:12.5px; display:flex; align-items:center;}
+  .cmp-cell.label{
+    position:sticky; left:0; background:var(--bg); z-index:2; font-family:'Share Tech Mono',monospace;
+    font-size:9px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; width:96px;
+  }
+  .cmp-cell.shipcol{width:136px; flex-direction:column; align-items:stretch; gap:4px; font-family:'Rajdhani',sans-serif;}
+  .cmp-thumb{width:100%; height:80px; background:var(--panel); border:1px solid var(--line); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); font-family:'Rajdhani',sans-serif; font-weight:700;}
+  .cmp-thumb img{width:100%;height:100%;object-fit:cover;}
+  .cmp-shipname{font-weight:700; font-size:14px; line-height:1.15;}
+  .cmp-remove{align-self:flex-start; font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); background:none; border:1px solid var(--line); padding:2px 6px; cursor:pointer; margin-top:2px;}
+  .cmp-value{font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13.5px;}
+
+  #home-view{position:fixed; inset:0; background:var(--bg); z-index:47; overflow-y:auto; transform:translateY(100%); transition:transform 0.28s ease;}
+  #home-view.open{transform:translateY(0);}
+  .home-hero{padding:26px 20px 18px; text-align:center; border-bottom:1px solid var(--line);}
+  .home-hero h2{font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; margin:10px 0 6px; letter-spacing:1px;}
+  .home-hero h2 span{color:var(--cyan);}
+  .home-hero p{font-size:13px; color:var(--muted); line-height:1.6; margin:0; max-width:420px; margin-inline:auto;}
+  .home-stat{display:flex; justify-content:center; gap:22px; margin-top:14px;}
+  .home-stat div{text-align:center;}
+  .home-stat .hs-n{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--cyan);}
+  .home-stat .hs-l{font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px;}
+  /* ---------- Animated tutorial ---------- */
+  #tutorial{position:fixed; inset:0; z-index:80; background:rgba(5,8,11,0.9);
+            display:none; align-items:center; justify-content:center; padding:20px;}
+  #tutorial.open{display:flex;}
+  .tut-card{width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line);
+            position:relative; overflow:hidden;}
+  .tut-skip{position:absolute; top:10px; right:10px; z-index:3; background:none; border:none;
+            color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:10px;
+            letter-spacing:1px; cursor:pointer; padding:6px 8px;}
+  .tut-stage{height:190px; background:var(--void, #080c11); border-bottom:1px solid var(--line);
+             position:relative; overflow:hidden;}
+  .tut-text{padding:16px 18px 4px;}
+  .tut-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:19px; color:var(--text);}
+  .tut-desc{font-size:13px; color:var(--muted); line-height:1.55; margin-top:5px; min-height:58px;}
+  .tut-dots{display:flex; gap:6px; justify-content:center; padding:6px 0 12px;}
+  .tut-dot{width:6px; height:6px; border-radius:50%; background:var(--line); transition:all .25s;}
+  .tut-dot.on{background:var(--cyan); width:18px; border-radius:3px;}
+  .tut-nav{display:flex; gap:8px; padding:0 16px 16px;}
+  .tut-btn{flex:1; padding:11px; background:none; border:1px solid var(--line); color:var(--muted);
+           font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; cursor:pointer;}
+  .tut-btn.primary{background:var(--cyan); border-color:var(--cyan); color:var(--bg); font-weight:700;}
+  .tut-btn:disabled{opacity:0.35; cursor:default;}
+
+  /* animated mock elements inside the stage */
+  .tm{position:absolute; opacity:0; animation-fill-mode:forwards;}
+  @keyframes tmIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  @keyframes tmSlide{from{opacity:0; transform:translateX(-14px);} to{opacity:1; transform:none;}}
+  @keyframes tmPop{0%{opacity:0; transform:scale(.8);} 60%{transform:scale(1.08);} 100%{opacity:1; transform:scale(1);}}
+  @keyframes tmPulse{0%,100%{opacity:.35;} 50%{opacity:1;}}
+  @keyframes tmTap{0%,70%{opacity:0; transform:scale(1.6);} 85%{opacity:.9; transform:scale(.9);} 100%{opacity:0; transform:scale(1.3);}}
+  @keyframes tmBar{from{width:0;} to{width:var(--w,60%);}}
+  .tm-row{left:14px; right:14px; height:30px; background:var(--panel); border:1px solid var(--line);
+          display:flex; align-items:center; gap:8px; padding:0 8px;
+          font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; color:var(--text);}
+  .tm-chip{height:20px; padding:0 8px; display:flex; align-items:center; background:transparent;
+           border:1px solid var(--line); font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted);}
+  .tm-chip.on{background:var(--cyan); color:var(--bg); border-color:var(--cyan); font-weight:700;}
+  .tm-tap{width:26px; height:26px; border-radius:50%; border:2px solid var(--cyan);
+          animation:tmTap 1.8s ease-out infinite;}
+  .tm-star{color:var(--amber); font-size:15px;}
+  .tm-bar{height:7px; background:var(--cyan);}
+
+  .install-card{
+    display:flex; gap:13px; align-items:flex-start; margin:14px 16px 4px;
+    background:linear-gradient(135deg, rgba(79,216,232,0.09), rgba(240,168,64,0.05));
+    border:1px solid rgba(79,216,232,0.4); padding:14px;
+  }
+  .ic-icon{flex:0 0 40px; height:40px; display:flex; align-items:center; justify-content:center;
+           border:1px solid rgba(79,216,232,0.4); color:var(--cyan);}
+  .ic-icon svg{width:20px;height:20px;}
+  .ic-body{flex:1; min-width:0;}
+  .ic-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15.5px; color:var(--text);}
+  .ic-desc{font-size:12px; color:var(--muted); line-height:1.5; margin-top:3px;}
+  .ic-actions{display:flex; gap:8px; margin-top:10px;}
+  .ic-btn{
+    font-family:'Share Tech Mono',monospace; font-size:10.5px; letter-spacing:0.8px; padding:7px 12px;
+    background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer;
+  }
+  .ic-btn.primary{background:var(--cyan); border-color:var(--cyan); color:var(--bg); font-weight:700;}
+
+  #ios-install-sheet{
+    position:fixed; inset:0; z-index:70; background:rgba(5,8,11,0.82);
+    display:none; align-items:flex-end;
+  }
+  #ios-install-sheet.open{display:flex;}
+  .ios-sheet-inner{
+    width:100%; background:var(--panel); border-top:1px solid var(--cyan);
+    padding:16px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .ios-sheet-head{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
+    font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1.5px; color:var(--cyan);
+  }
+  .ios-step{display:flex; gap:12px; align-items:flex-start; padding:9px 0; font-size:13.5px; color:var(--text); line-height:1.5;}
+  .ios-num{
+    flex:0 0 24px; height:24px; display:flex; align-items:center; justify-content:center;
+    background:var(--cyan); color:var(--bg); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px;
+  }
+
+  .feature-card{
+    display:flex; gap:13px; align-items:flex-start; margin:10px 16px;
+    background:var(--panel); border:1px solid var(--line); padding:14px; cursor:pointer;
+  }
+  .feature-card:active{background:var(--panel-2);}
+  .fc-icon{
+    flex:0 0 42px; height:42px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--cyan);
+  }
+  .fc-icon svg{width:21px; height:21px;}
+  .fc-body{flex:1; min-width:0;}
+  .fc-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.4px;}
+  .fc-desc{font-size:12.5px; color:var(--muted); line-height:1.55; margin-top:3px;}
+  .fc-arrow{color:var(--muted); font-size:18px; align-self:center;}
+
+  #tools-view{position:fixed; inset:0; background:var(--bg); z-index:49; transform:translateY(100%); transition:transform 0.28s ease; overflow-y:auto;}
+  #tools-view.open{transform:translateY(0);}
+  .tool-tabs{display:flex; gap:0; border-bottom:1px solid var(--line); position:sticky; top:49px;
+             background:var(--bg); z-index:3; overflow-x:auto; scrollbar-width:none;}
+  .tool-tabs::-webkit-scrollbar{display:none; width:0; height:0;}
+
+  /* ---- Scrollbars ----
+     Horizontal chip strips: hidden entirely (they scroll by swipe/drag).
+     Vertical panes: thin and on-theme rather than a default light bar. */
+  .filters, .tool-tabs, .cmp-scroll, #tools-body .filters{
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .filters::-webkit-scrollbar,
+  .tool-tabs::-webkit-scrollbar,
+  #tools-body .filters::-webkit-scrollbar{display:none; width:0; height:0;}
+
+  #tools-view, #detail, #home-view, #compare-view, .adv-filter-panel, header{
+    scrollbar-width:thin; scrollbar-color:#2b3d4d transparent;
+  }
+  #tools-view::-webkit-scrollbar,
+  #detail::-webkit-scrollbar,
+  #home-view::-webkit-scrollbar,
+  #compare-view::-webkit-scrollbar,
+  .adv-filter-panel::-webkit-scrollbar,
+  header::-webkit-scrollbar{width:6px; height:6px;}
+  #tools-view::-webkit-scrollbar-track,
+  #detail::-webkit-scrollbar-track,
+  #home-view::-webkit-scrollbar-track,
+  #compare-view::-webkit-scrollbar-track,
+  .adv-filter-panel::-webkit-scrollbar-track,
+  header::-webkit-scrollbar-track{background:transparent;}
+  #tools-view::-webkit-scrollbar-thumb,
+  #detail::-webkit-scrollbar-thumb,
+  #home-view::-webkit-scrollbar-thumb,
+  #compare-view::-webkit-scrollbar-thumb,
+  .adv-filter-panel::-webkit-scrollbar-thumb,
+  header::-webkit-scrollbar-thumb{background:#2b3d4d; border-radius:3px;}
+
+  /* The header only needs its own scroll when the filter panel is open;
+     otherwise an empty scroll context can produce a stray bar. */
+  header{overflow-y:hidden;}
+  header.panel-open{overflow-y:auto;}
+  .tool-tab{
+    flex:1 0 auto; min-width:86px; background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:10.5px; letter-spacing:1px;
+    padding:12px 8px; cursor:pointer; white-space:nowrap;
+  }
+  .tool-tab.active{color:var(--cyan); border-bottom-color:var(--cyan);}
+  .tool-intro{padding:14px 16px 4px; font-size:12.5px; color:var(--muted); line-height:1.55;}
+  .tool-field{padding:0 16px; margin-top:12px; display:flex; flex-direction:column; gap:5px;}
+  .tool-field label{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;}
+  .tool-field input, .tool-field select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:15px; padding:9px 10px; width:100%;
+  }
+  #tools-body{overflow-x:hidden;}
+  #tools-body .filters{scrollbar-width:none; -ms-overflow-style:none;}
+  #tools-body .filters::-webkit-scrollbar{display:none; width:0; height:0;}
+  .eff-row{max-width:100%;}
+
+  .explainer{margin:14px 16px 0; padding:13px; background:rgba(79,216,232,0.06);
+             border-left:2px solid var(--cyan); border-top:1px solid var(--line);
+             border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .ex-title{font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:1.2px;
+            color:var(--cyan); text-transform:uppercase; margin-bottom:6px;}
+  .ex-body{font-size:12.5px; color:var(--muted); line-height:1.6;}
+  .ex-body strong{color:var(--text);}
+
+  .eff-highlight{margin:14px 16px 0; padding:13px; background:var(--panel-2);
+                 border:1px solid rgba(240,168,64,0.4);}
+  .eh-name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--text); line-height:1.15;}
+  .eh-detail{font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5;}
+  .eh-detail strong{color:var(--amber);}
+  .eh-compare{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted);
+              margin-top:7px; padding-top:7px; border-top:1px solid var(--line); line-height:1.5;}
+
+  .eff-track{height:3px; background:var(--line); margin-top:6px; overflow:hidden;}
+  .eff-fill{height:100%; background:linear-gradient(90deg, var(--cyan), rgba(79,216,232,0.35));}
+
+  .eff-row{display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); padding:9px 11px; margin:0 16px 6px;}
+  .eff-rank{font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); width:24px; flex-shrink:0;}
+  .eff-name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; flex:1; min-width:0;}
+  .eff-sub{font-size:10.5px; color:var(--muted); margin-top:1px;}
+  .eff-metric{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; color:var(--cyan); white-space:nowrap;}
+  .eff-metric small{font-size:9.5px; color:var(--muted); font-weight:500;}
+  .roi-result{margin:16px; padding:14px; background:var(--panel-2); border:1px solid var(--cyan);}
+  .roi-big{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:30px; color:var(--cyan); line-height:1.1;}
+  .roi-line{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(34,48,60,0.7); font-size:12.5px;}
+  .roi-line:last-child{border-bottom:none;}
+  .roi-line .rk{color:var(--muted);}
+  .roi-line .rv{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px;}
+  .tool-note{padding:10px 16px 28px; font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); line-height:1.6;}
+
+
+  .skeleton{display:flex; flex-direction:column; gap:8px; padding:0 16px;}
+  .skel-row{height:74px; background:linear-gradient(90deg,var(--panel) 25%,var(--panel-2) 50%,var(--panel) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border:1px solid var(--line);}
+  @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+  #detail{position:fixed; inset:0; background:var(--bg); z-index:50; transform:translateY(100%); transition:transform 0.28s ease; overflow-y:auto;}
+  #detail.open{transform:translateY(0);}
+  .d-topbar{position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:rgba(10,14,19,0.9); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);}
+  .back-btn{display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--line); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:11px; padding:7px 10px; cursor:pointer;}
+  .d-topbar .idtag{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .hero{position:relative; padding:22px 16px 16px;}
+  .hero-frame{position:relative; aspect-ratio:16/10; background:var(--panel); border:1px solid var(--line); overflow:hidden; display:flex; align-items:center; justify-content:center;}
+  .hero-frame img{width:100%;height:100%;object-fit:cover; display:block;}
+  .hero-frame .fallback{font-family:'Rajdhani',sans-serif; font-weight:700; color:var(--line); font-size:15px; text-align:center; padding:0 20px; letter-spacing:1px;}
+  .corner{position:absolute; width:16px; height:16px; border-color:var(--cyan); pointer-events:none;}
+  .corner.tl{top:6px;left:6px;border-top:2px solid;border-left:2px solid;}
+  .corner.tr{top:6px;right:6px;border-top:2px solid;border-right:2px solid;}
+  .corner.bl{bottom:6px;left:6px;border-bottom:2px solid;border-left:2px solid;}
+  .corner.br{bottom:6px;right:6px;border-bottom:2px solid;border-right:2px solid;}
+  .scan{position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--cyan),transparent); top:0; animation:scan 2.2s ease-in-out infinite;}
+  @keyframes scan{0%{top:0;opacity:0;}10%{opacity:1;}50%{top:100%;opacity:1;}60%{opacity:0;}100%{top:100%;opacity:0;}}
+
+  .title-block{padding:14px 16px 0;}
+  .title-block .manu-line{font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan); letter-spacing:1.5px; text-transform:uppercase;}
+  .title-block h2{font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; margin:2px 0 6px; letter-spacing:0.5px; line-height:1.05;}
+  .badges{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px;}
+  .badge{font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.5px; text-transform:uppercase; padding:3px 8px; border:1px solid var(--line); color:var(--muted);}
+  .badge.status-flight-ready{color:#7ce89a; border-color:rgba(124,232,154,0.4);}
+  .badge.status-in-concept{color:var(--amber); border-color:rgba(240,168,64,0.4);}
+
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); margin:16px 16px 0; border:1px solid var(--line);}
+  .stat{background:var(--panel); padding:11px 12px;}
+  .stat .k{font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;}
+  .stat .v{font-family:'Rajdhani',sans-serif; font-size:19px; font-weight:700; margin-top:3px; color:var(--text);}
+  .stat .v small{font-size:11px; color:var(--muted); font-weight:500;}
+  .stat.wide{grid-column:1/-1;}
+
+  .section-label{font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--cyan); text-transform:uppercase; margin:22px 16px 8px; display:flex; align-items:center; gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--line);}
+
+  .weapon-list{padding:0 16px; display:flex; flex-direction:column; gap:6px;}
+  .weapon-row{display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); padding:9px 12px; font-size:12.5px;}
+
+  .price-panel{margin:0 16px; padding:14px; background:var(--panel-2); border:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+  .price-panel .pk{font-size:11px; color:var(--muted);}
+  .price-panel .pv{font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--amber);}
+
+  .cta-row{display:flex; gap:8px; padding:16px;}
+  .cta{flex:1; text-align:center; padding:11px; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; border:1px solid var(--line); color:var(--muted); text-decoration:none; display:block;}
+  .cta.primary{color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700;}
+  .cta.hangar{color:var(--amber); border-color:rgba(240,168,64,0.5);}
+  .cta.hangar.active{color:var(--bg); background:var(--amber); border-color:var(--amber); font-weight:700;}
+
+  .ext-tools{margin:12px 16px 0; display:flex; flex-direction:column; gap:6px;}
+  .ext-link{display:block; padding:11px 12px; background:var(--panel); border:1px solid var(--line);
+            text-decoration:none; color:var(--text);}
+  .ext-link:active{background:var(--panel-2);}
+  .ext-name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14.5px; color:var(--cyan);}
+  .ext-name span{color:var(--muted); font-size:11px; margin-left:2px;}
+  .ext-desc{font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4;}
+
+  .hp-list{margin:0 16px; border:1px solid var(--line); background:var(--panel);}
+  .hp-row{display:flex; justify-content:space-between; align-items:center; gap:12px;
+          padding:9px 12px; border-bottom:1px solid rgba(34,48,60,0.6);}
+  .hp-row:last-child{border-bottom:none;}
+  .hp-name{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13.5px; color:var(--text);}
+  .hp-total{font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); margin-top:1px;}
+  .hp-chips{display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end;}
+  .hp-chip{font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--cyan);
+           border:1px solid rgba(79,216,232,0.35); padding:2px 6px; white-space:nowrap;}
+  .hp-chip strong{color:var(--cyan); font-weight:700;}
+
+  .flight-panel{margin:0 16px; border:1px solid var(--line); background:var(--panel);}
+  .fp-row{display:flex; justify-content:space-between; align-items:baseline; padding:8px 12px; border-bottom:1px solid rgba(34,48,60,0.6); gap:12px;}
+  .fp-row:last-child{border-bottom:none;}
+  .fp-label{font-size:12.5px; color:var(--text);}
+  .fp-val{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14.5px; color:var(--text); white-space:nowrap;}
+  .fp-val small{font-size:10px; color:var(--muted); font-weight:500; margin-left:2px;}
+  .fp-val .boosted{color:var(--cyan); font-weight:600;}
+  .fp-sub{font-size:10.5px; color:var(--muted); margin-top:1px;}
+
+  .rvb-panel{margin:0 16px; padding:13px; background:var(--panel-2); border:1px solid var(--line);}
+  .rvb-headline{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; color:var(--text); line-height:1.35;}
+  .rvb-headline span{color:var(--cyan); font-size:19px;}
+  .rvb-line{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:5px 0;}
+  .rvb-line strong{color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13.5px;}
+  .rvb-bar{height:5px; background:var(--line); margin:9px 0 7px; overflow:hidden;}
+  .rvb-fill{height:100%; background:linear-gradient(90deg, var(--cyan), var(--amber));}
+  .rvb-note{font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); line-height:1.5;}
+
+  .uec-list{padding:0 16px; display:flex; flex-direction:column; gap:6px;}
+  .uec-row{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); padding:10px 12px;}
+  .uec-loc{min-width:0; flex:1;}
+  .uec-terminal{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13.5px; color:var(--text); line-height:1.2;}
+  .uec-place{font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); margin-top:2px; letter-spacing:0.3px;}
+  .uec-price{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; color:var(--amber); white-space:nowrap; flex-shrink:0;}
+  .uec-price small{font-size:9.5px; color:var(--muted); font-weight:500;}
+
+  /* ================= DESKTOP / TABLET LAYOUT =================
+     Mobile-first styles above are untouched; these only apply on wider
+     viewports where a single stretched column reads badly. */
+  @media (min-width: 760px){
+    /* Constrain the overall reading width so content isn't spread thin */
+    header > *, #list, #status-banner, #hangar-summary{
+      max-width:900px; margin-left:auto; margin-right:auto;
+    }
+    header{padding-left:24px; padding-right:24px;}
+
+    /* Ship rows: two per line, still tappable cards */
+    #list{
+      display:grid; grid-template-columns:1fr 1fr; gap:8px;
+      max-width:900px; margin-inline:auto;
+    }
+
+    /* Hero image was filling the viewport before any data was visible */
+    .hero{max-width:900px; margin-inline:auto; padding-top:16px;}
+    .hero-frame{aspect-ratio:auto; height:300px;}
+    .hero-frame img{object-fit:cover; object-position:center;}
+
+    .title-block, .desc-text, .footnote{max-width:900px; margin-inline:auto;}
+
+    /* Two-column flow for the stacked sections.
+       break-inside stops a panel splitting across the column gap;
+       break-after on labels keeps a heading with its content. */
+    #d-body .detail-flow{
+      max-width:900px; margin-inline:auto;
+      column-count:2; column-gap:20px; padding:0 4px;
+    }
+    #d-body .detail-flow > *{break-inside:avoid; -webkit-column-break-inside:avoid;}
+    #d-body .detail-flow .section-label{break-after:avoid; -webkit-column-break-after:avoid; margin-top:14px;}
+    #d-body .detail-flow .stat-grid,
+    #d-body .detail-flow .flight-panel,
+    #d-body .detail-flow .hp-list,
+    #d-body .detail-flow .price-panel,
+    #d-body .detail-flow .rvb-panel,
+    #d-body .detail-flow .uec-list,
+    #d-body .detail-flow .similar-list,
+    #d-body .detail-flow .weapon-list{margin-left:0; margin-right:0;}
+    #d-body .detail-flow .cta-row{padding-left:0; padding-right:0;}
+
+    /* Tools, manufacturer and compare views get the same reading width */
+    #tools-body, .tool-intro, .tool-field, .tool-note,
+    .eff-row, .mfg-row, .roi-result, .hangar-summary{
+      max-width:900px; margin-inline:auto;
+    }
+    .cmp-scroll{max-width:900px; margin-inline:auto;}
+    .tool-tabs{max-width:900px; margin-inline:auto;}
+
+    /* Home page: feature cards side by side */
+    .home-hero{max-width:900px; margin-inline:auto;}
+    #home-body .feature-card, #home-body .install-card{max-width:900px; margin-inline:auto;}
+  }
+
+  @media (min-width: 1100px){
+    header > *, #list, .hero, .title-block, .desc-text, .footnote,
+    #d-body .detail-flow, #tools-body, .cmp-scroll, .tool-tabs,
+    .home-hero, #home-body .feature-card, #home-body .install-card,
+    #status-banner, #hangar-summary{max-width:1040px;}
+    #list{grid-template-columns:repeat(3, 1fr);}
+    .hero-frame{height:340px;}
+    /* Feature cards in a grid rather than a long single column */
+    #home-body{display:block;}
+  }
+
+  /* Pointer devices: give rows a hover state */
+  @media (hover: hover){
+    .row:hover, .eff-row:hover, .mfg-row:hover, .similar-row:hover,
+    .feature-card:hover{background:var(--panel-2); border-color:#2e4050;}
+    .chip:hover{color:var(--text);}
+  }
+
+  .footnote{padding:8px 16px 24px; font-size:10.5px; color:#4a5765; font-family:'Share Tech Mono',monospace; line-height:1.6;}
+  .desc-text{padding:0 16px; font-size:12.5px; color:var(--muted); line-height:1.6;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark"></div>
+    <h1>VERSE<span>DEX</span></h1>
+    <div class="count" id="ship-count">—</div>
+  </div>
+  <div class="sub">STAR CITIZEN // SHIP &amp; VEHICLE REGISTRY // <span id="data-version">LIVE ROSTER</span></div>
+
+  <nav id="top-nav">
+    <button class="nav-item active" data-nav="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <span>HOME</span>
+    </button>
+    <button class="nav-item" data-nav="ships">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l9-13 9 13"/><path d="M3 17c3 2 6 2 9 0s6-2 9 0"/><path d="M12 4v13"/></svg>
+      <span>SHIPS</span>
+    </button>
+    <button class="nav-item" data-nav="tools">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>
+      <span>TOOLS</span>
+      <span class="nav-dot" id="nav-tools-dot"></span>
+    </button>
+    <button class="nav-item" data-nav="hangar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l-8 6v12h16V9z"/><path d="M9 21v-6h6v6"/></svg>
+      <span>HANGAR</span>
+      <span class="nav-badge" id="nav-hangar-count">0</span>
+    </button>
+  </nav>
+
+  <div class="searchbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#728192" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Search ship or manufacturer…">
+  </div>
+
+  <div class="toolbar">
+    <button id="adv-filter-toggle" class="tb-btn tb-primary">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+      FILTERS
+      <span id="active-filter-count" class="tb-badge" style="display:none;">0</span>
+    </button>
+    <button id="hangar-toggle" class="tb-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L4 14 L12 12 L20 14 Z"/><path d="M4 14 L2 22 L12 18 L22 22 L20 14"/></svg>
+      <span id="hangar-toggle-label">HANGAR</span>
+      <span id="hangar-toggle-count" class="tb-badge">0</span>
+    </button>
+    <button id="random-ship-btn" class="tb-btn" aria-label="Random ship" title="Random ship">🎲</button>
+  </div>
+
+  <div id="adv-filter-panel" class="adv-filter-panel">
+    <div class="adv-panel-head">
+      <span>ADVANCED FILTERS</span>
+      <button id="adv-close" class="adv-close-btn">✕ CLOSE</button>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">MANUFACTURER</label>
+      <select id="mfg-filter" class="adv-select">
+        <option value="ALL">All manufacturers</option>
+      </select>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">ROLE</label>
+      <div class="filters" id="filters"></div>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">STATUS</label>
+      <div class="filters" id="status-filters"></div>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">SEATS (TOTAL CREW CAPACITY)</label>
+      <div class="filters" id="seat-filter-chips">
+        <button class="chip active" data-seats="ANY">ANY</button>
+        <button class="chip" data-seats="1">1 SEAT</button>
+        <button class="chip" data-seats="2">2 SEATS</button>
+        <button class="chip" data-seats="3-4">3–4</button>
+        <button class="chip" data-seats="5-9">5–9</button>
+        <button class="chip" data-seats="10+">10+</button>
+      </div>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">EXCLUDE</label>
+      <div class="filters">
+        <button class="chip" id="exclude-ground-chip" data-on="false">🚫 GROUND VEHICLES</button>
+        <button class="chip" id="exclude-snub-chip" data-on="false">🚫 SNUBS</button>
+      </div>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min cargo: <span id="cargo-filter-val" style="color:var(--cyan);">0</span> SCU</label>
+      <input type="range" id="cargo-filter" min="0" max="1000" step="10" value="0" style="width:100%; accent-color:var(--cyan);">
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">SORT &amp; CURRENCY</label>
+      <div style="display:flex; gap:6px;">
+        <select id="sort" class="adv-select" style="flex:1;">
+          <option value="name">NAME (A–Z)</option>
+          <option value="manufacturer">MANUFACTURER</option>
+          <option value="cargo">CARGO (SCU)</option>
+          <option value="price">PRICE</option>
+        </select>
+        <select id="currency-select" class="adv-select" style="flex:0 0 92px;">
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+          <option value="CAD">C$ CAD</option>
+          <option value="AUD">A$ AUD</option>
+          <option value="UEC">UEC</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="adv-row">
+      <label class="adv-label">MEDBED TIER</label>
+      <select id="adv-medbed" class="adv-select">
+        <option value="OFF">Off</option>
+        <option value="ANY">Any tier</option>
+        <option value="T1">T1</option>
+        <option value="T2">T2</option>
+        <option value="T3">T3</option>
+      </select>
+    </div>
+    <div class="adv-row adv-checks">
+      <label class="adv-check"><input type="checkbox" id="adv-bed"> Has bed (log on/off)</label>
+      <label class="adv-check"><input type="checkbox" id="adv-cargogrid"> Has cargo grid</label>
+      <label class="adv-check"><input type="checkbox" id="adv-buyable"> Buyable in-game (aUEC)</label>
+    </div>
+    <div class="adv-row">
+      <label class="adv-label">HARDPOINT SIZE</label>
+      <div class="filters" id="adv-hardpoint-chips">
+        <button class="chip active" data-hp="OFF">OFF</button>
+        <button class="chip" data-hp="1">S1</button>
+        <button class="chip" data-hp="2">S2</button>
+        <button class="chip" data-hp="3">S3</button>
+        <button class="chip" data-hp="4">S4</button>
+        <button class="chip" data-hp="5">S5</button>
+      </div>
+    </div>
+    <div class="adv-row">
+      <label class="adv-label">COMPONENT TYPE + SIZE</label>
+      <div style="display:flex; gap:6px;">
+        <select id="adv-comp-type" class="adv-select" style="flex:1;">
+          <option value="OFF">Any component</option>
+          <option value="PowerPlant">Power Plant</option>
+          <option value="Cooler">Cooler</option>
+          <option value="Shield">Shield</option>
+          <option value="QuantumDrive">Quantum Drive</option>
+          <option value="Turret">Turret</option>
+          <option value="MissileLauncher">Missile Launcher</option>
+        </select>
+        <select id="adv-comp-size" class="adv-select" style="flex:0 0 90px;">
+          <option value="OFF">Any size</option>
+          <option value="1">S1</option>
+          <option value="2">S2</option>
+          <option value="3">S3</option>
+          <option value="4">S4</option>
+        </select>
+      </div>
+    </div>
+    <div class="adv-row">
+      <label class="adv-label">FITS WITHIN (approx. — exterior dimensions only, not real hangar clearance)</label>
+      <select id="adv-dock-ship" class="adv-select">
+        <option value="OFF">Off</option>
+      </select>
+    </div>
+    <div class="adv-row" style="border-top:1px solid var(--line); padding-top:12px;">
+      <label class="adv-label">FLIGHT PERFORMANCE MINIMUMS</label>
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min SCM speed: <span id="fmin-scm-val" style="color:var(--cyan);">0</span> m/s</label>
+      <input type="range" id="fmin-scm" min="0" max="400" step="10" value="0" style="width:100%; accent-color:var(--cyan);">
+
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min pitch rate: <span id="fmin-pitch-val" style="color:var(--cyan);">0</span> °/s</label>
+      <input type="range" id="fmin-pitch" min="0" max="120" step="5" value="0" style="width:100%; accent-color:var(--cyan);">
+
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min yaw rate: <span id="fmin-yaw-val" style="color:var(--cyan);">0</span> °/s</label>
+      <input type="range" id="fmin-yaw" min="0" max="120" step="5" value="0" style="width:100%; accent-color:var(--cyan);">
+
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min roll rate: <span id="fmin-roll-val" style="color:var(--cyan);">0</span> °/s</label>
+      <input type="range" id="fmin-roll" min="0" max="400" step="10" value="0" style="width:100%; accent-color:var(--cyan);">
+
+      <label class="adv-label" style="text-transform:none; color:var(--muted);">Min main accel: <span id="fmin-accel-val" style="color:var(--cyan);">0</span> G</label>
+      <input type="range" id="fmin-accel" min="0" max="30" step="1" value="0" style="width:100%; accent-color:var(--cyan);">
+    </div>
+
+    <button id="adv-reset" class="hs-copy" style="border-color:var(--muted); color:var(--muted);">RESET ADVANCED FILTERS</button>
+  </div>
+
+</header>
+
+<div id="status-banner"></div>
+<div id="hangar-summary" class="hangar-summary"></div>
+<div id="skeleton" class="skeleton" style="margin-top:14px;">
+  <div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div>
+  <div class="skel-row"></div><div class="skel-row"></div>
+</div>
+<div id="list"></div>
+
+<div id="detail">
+  <div class="d-topbar">
+    <button class="back-btn" onclick="closeDetail()">&larr; REGISTRY</button>
+    <div class="idtag" id="d-idtag">SC-000</div>
+  </div>
+  <div id="d-body"></div>
+</div>
+
+<div id="compare-view">
+  <div class="d-topbar">
+    <button class="back-btn" onclick="closeCompareView()">&larr; REGISTRY</button>
+    <div class="idtag">COMPARE</div>
+  </div>
+  <div class="section-label" style="margin-top:16px;">Stat Comparison</div>
+  <div id="cmp-radar" style="padding:8px 16px 4px;"></div>
+  <div class="cmp-scroll">
+    <div class="cmp-grid" id="cmp-grid"></div>
+  </div>
+</div>
+
+<div id="tutorial">
+  <div class="tut-card">
+    <button class="tut-skip" id="tut-skip">SKIP</button>
+    <div class="tut-stage" id="tut-stage"></div>
+    <div class="tut-text">
+      <div class="tut-title" id="tut-title"></div>
+      <div class="tut-desc" id="tut-desc"></div>
+    </div>
+    <div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-nav">
+      <button class="tut-btn" id="tut-prev">BACK</button>
+      <button class="tut-btn primary" id="tut-next">NEXT</button>
+    </div>
+  </div>
+</div>
+
+<div id="ios-install-sheet">
+  <div class="ios-sheet-inner">
+    <div class="ios-sheet-head">
+      <span>ADD TO HOME SCREEN</span>
+      <button id="ios-sheet-close" class="adv-close-btn">✕</button>
+    </div>
+    <div id="ios-sheet-steps"></div>
+  </div>
+</div>
+
+<div id="home-view">
+  <div id="home-body"></div>
+</div>
+
+<div id="tools-view">
+  <div class="d-topbar">
+    <button class="back-btn" onclick="closeToolsView()">&larr; REGISTRY</button>
+    <div class="idtag">TOOLS</div>
+  </div>
+
+  <div class="tool-tabs">
+    <button class="tool-tab active" data-tool="efficiency">EFFICIENCY</button>
+    <button class="tool-tab" data-tool="roi">ROI</button>
+    <button class="tool-tab" data-tool="budget">BUDGET</button>
+    <button class="tool-tab" data-tool="routes">ROUTES</button>
+    <button class="tool-tab" data-tool="fleet">FLEET</button>
+  </div>
+
+  <div id="tools-body"></div>
+</div>
+
+
+<div id="compare-bar" role="button" tabindex="0" aria-label="View ship comparison">
+  <span id="compare-bar-label">0 SELECTED</span>
+  <span>
+    <button class="cb-clear" id="compare-clear" onclick="event.stopPropagation(); clearCompare();">CLEAR</button>
+    VIEW COMPARE →
+  </span>
+</div>
+
+<script>
+const API_BASE = "https://api.star-citizen.wiki/api/vehicles";
+const PAGE_SIZE = 40;        // smaller pages = faster first paint, less likely to time out
+const MAX_PAGES = 12;        // 40 x 12 = up to 480 ships
+const FETCH_TIMEOUT_MS = 12000;
+
+async function fetchWithTimeout(url, ms){
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('timed out')), ms)
+  );
+  return Promise.race([fetch(url), timeout]);
+}
+
+let SHIPS = [];
+let activeRole = "ALL";
+let activeManufacturer = "ALL";
+let activeStatus = "ALL";
+let activeQuery = "";
+let sortKey = "name";
+let viewingHangar = false;
+let hangarIds = new Set();
+let hangarAvailable = true;
+const TUTORIAL_SEEN_KEY = 'versedex_tutorial_seen_v1';
+let tutStep = 0;
+
+const TUT_STEPS = [
+  {
+    title: 'Every ship, live',
+    desc: 'The full roster loads straight from the community wiki, so new ships appear as soon as the data does. Search by name or manufacturer.',
+    stage: `
+      <div class="tm tm-row" style="top:26px;  animation:tmSlide .45s .05s forwards;">🔍 <span style="color:var(--muted);font-weight:400;">Search ship…</span></div>
+      <div class="tm tm-row" style="top:70px;  animation:tmSlide .45s .25s forwards;">Avenger Titan <span style="margin-left:auto;color:var(--muted);font-size:10px;">8 SCU</span></div>
+      <div class="tm tm-row" style="top:110px; animation:tmSlide .45s .45s forwards;">Carrack <span style="margin-left:auto;color:var(--muted);font-size:10px;">456 SCU</span></div>
+      <div class="tm tm-row" style="top:150px; animation:tmSlide .45s .65s forwards;">Freelancer <span style="margin-left:auto;color:var(--muted);font-size:10px;">66 SCU</span></div>`
+  },
+  {
+    title: 'Filter to exactly what you need',
+    desc: 'Seats, medbed tier, cargo grid, hardpoint size, flight performance minimums — and hide ground vehicles or snubs when they get in the way.',
+    stage: `
+      <div class="tm" style="top:24px; left:14px; right:14px; display:flex; gap:5px; flex-wrap:wrap; animation:tmIn .4s .05s forwards;">
+        <span class="tm-chip on">1 SEAT</span><span class="tm-chip">2 SEATS</span><span class="tm-chip">3–4</span>
+      </div>
+      <div class="tm" style="top:58px; left:14px; right:14px; display:flex; gap:5px; animation:tmIn .4s .3s forwards;">
+        <span class="tm-chip on">🚫 GROUND</span><span class="tm-chip">🚫 SNUBS</span>
+      </div>
+      <div class="tm tm-row" style="top:100px; animation:tmPop .4s .55s forwards;">Arrow <span style="margin-left:auto;color:var(--cyan);font-size:10px;">1 seat</span></div>
+      <div class="tm tm-row" style="top:140px; animation:tmPop .4s .75s forwards;">Gladius <span style="margin-left:auto;color:var(--cyan);font-size:10px;">1 seat</span></div>`
+  },
+  {
+    title: 'Compare up to four',
+    desc: 'Tap + on any ship, then open the compare view for a side-by-side table and a radar chart across speed, agility, hull, shields and cargo.',
+    stage: `
+      <svg class="tm" viewBox="0 0 200 160" style="top:12px; left:50%; transform:translateX(-50%); width:180px; animation:tmIn .5s .1s forwards;">
+        <polygon points="100,20 168,60 142,140 58,140 32,60" fill="none" stroke="#22303c" stroke-width="1"/>
+        <polygon points="100,52 134,72 121,116 79,116 66,72" fill="none" stroke="#22303c" stroke-width="1"/>
+        <polygon points="100,30 155,66 130,128 70,120 45,70" fill="#4fd8e8" fill-opacity="0.16" stroke="#4fd8e8" stroke-width="2">
+          <animate attributeName="fill-opacity" values="0;0.16" dur="0.8s" begin="0.3s" fill="freeze"/>
+        </polygon>
+        <polygon points="100,60 128,74 118,120 82,112 72,76" fill="#f0a840" fill-opacity="0.14" stroke="#f0a840" stroke-width="2">
+          <animate attributeName="fill-opacity" values="0;0.14" dur="0.8s" begin="0.6s" fill="freeze"/>
+        </polygon>
+      </svg>
+      <div class="tm" style="bottom:14px; left:0; right:0; display:flex; gap:12px; justify-content:center; animation:tmIn .4s .9s forwards;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);"><span style="display:inline-block;width:8px;height:8px;background:#4fd8e8;"></span> Arrow</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);"><span style="display:inline-block;width:8px;height:8px;background:#f0a840;"></span> Gladius</span>
+      </div>`
+  },
+  {
+    title: 'Build your hangar',
+    desc: 'Star the ships you own, or paste your fleet list to import it in one go. Saved on your device — no account needed.',
+    stage: `
+      <div class="tm tm-row" style="top:34px; animation:tmSlide .4s .05s forwards;">Freelancer <span class="tm-star" style="margin-left:auto;">★</span></div>
+      <div class="tm tm-row" style="top:76px; animation:tmSlide .4s .25s forwards;">Cutlass Black <span class="tm-star" style="margin-left:auto;">★</span></div>
+      <div class="tm" style="top:82px; right:26px; animation:tmIn .01s .45s forwards;"><div class="tm-tap"></div></div>
+      <div class="tm" style="top:124px; left:14px; right:14px; padding:9px; background:var(--panel-2); border:1px solid rgba(240,168,64,0.4); animation:tmPop .45s .8s forwards;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);letter-spacing:1px;">FLEET VALUE</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:19px;color:var(--amber);">$220</div>
+      </div>`
+  },
+  {
+    title: 'Tools that answer real questions',
+    desc: 'What can I afford right now? How many runs to earn this ship? Rent or buy? Which of my ships fits this cargo run?',
+    stage: `
+      <div class="tm" style="top:20px; left:14px; right:14px; display:flex; gap:4px; animation:tmIn .4s .05s forwards;">
+        <span class="tm-chip on">BUDGET</span><span class="tm-chip">ROI</span><span class="tm-chip">ROUTES</span>
+      </div>
+      <div class="tm" style="top:56px; left:14px; right:14px; padding:8px 10px; background:var(--panel); border:1px solid var(--line); animation:tmIn .4s .3s forwards;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);">YOUR BALANCE</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;color:var(--text);">2,000,000 aUEC</div>
+      </div>
+      <div class="tm tm-row" style="top:112px; animation:tmPop .4s .6s forwards;">Avenger Titan <span style="margin-left:auto;color:var(--cyan);font-size:10px;">1.5M</span></div>
+      <div class="tm" style="top:148px; left:14px; animation:tmIn .4s .75s forwards;"><div class="tm-bar" style="--w:62%; animation:tmBar .7s .8s forwards;"></div></div>
+      <div class="tm" style="top:146px; right:14px; font-family:'Share Tech Mono',monospace; font-size:9px; color:#7ce89a; animation:tmIn .4s .95s forwards;">500K left</div>`
+  },
+  {
+    title: 'Keep it close',
+    desc: 'Add VERSEDEX to your home screen — it opens fullscreen, works offline, and stops your browser clearing your hangar. Tap "SHOW ME HOW" for the steps.',
+    showInstall: true,
+    stage: `
+      <div class="tm" style="top:30px; left:50%; transform:translateX(-50%); width:76px; height:76px; border:1px solid rgba(79,216,232,0.5); display:flex; align-items:center; justify-content:center; animation:tmPop .5s .1s forwards;">
+        <svg viewBox="0 0 100 100" style="width:52px;height:52px;">
+          <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4fd8e8" stroke-width="3"/>
+          <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4fd8e8" stroke-width="3" opacity="0.5" transform="rotate(-58 50 50)"/>
+          <circle cx="50" cy="50" r="14" fill="#0a0e13" stroke="#4fd8e8" stroke-width="2.5"/>
+          <circle cx="84" cy="50" r="4" fill="#f0a840"/>
+        </svg>
+      </div>
+      <div class="tm" style="top:118px; left:0; right:0; text-align:center; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; color:var(--text); animation:tmIn .4s .5s forwards;">VERSEDEX</div>
+      <div class="tm" style="top:142px; left:0; right:0; text-align:center; font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; animation:tmPulse 1.6s .8s infinite, tmIn .4s .7s forwards;">ADD TO HOME SCREEN</div>`
+  }
+];
+let deferredInstallPrompt = null;
+const INSTALL_DISMISSED_KEY = 'versedex_install_dismissed_v1';
+let compareIds = new Set();
+const MAX_COMPARE = 4;
+let minCargoFilter = 0;
+let seatFilter = 'ANY';
+let excludeGround = false;
+let excludeSnub = false;
+let fminScm = 0, fminPitch = 0, fminYaw = 0, fminRoll = 0, fminAccel = 0;
+let advMedbed = 'OFF';
+let advBed = false;
+let advCargoGrid = false;
+let advBuyable = false;
+let advHardpointSize = 'OFF';
+let advCompType = 'OFF';
+let advCompSize = 'OFF';
+let advDockShip = 'OFF';
+
+const HANGAR_KEY = "versedex_hangar_v1";
+
+let savedHangarNames = [];
+
+function loadHangar(){
+  try{
+    const raw = localStorage.getItem(HANGAR_KEY);
+    if(!raw){ hangarIds = new Set(); }
+    else{
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)){
+        // v1 format: a bare array of IDs
+        hangarIds = new Set(parsed);
+        savedHangarNames = [];
+      }else{
+        hangarIds = new Set(parsed.ids || []);
+        savedHangarNames = parsed.names || [];
+      }
+    }
+  }catch(err){
+    hangarAvailable = false;
+    hangarIds = new Set();
+    console.warn("Hangar storage unavailable:", err.message);
+  }
+  updateHangarCount();
+}
+
+/* After the roster loads, recover any hangar entries whose IDs no longer
+   exist (e.g. the API reissued UUIDs) by matching on saved ship names. */
+function reconcileHangar(){
+  if(!SHIPS.length) return;
+  const validIds = new Set(SHIPS.map(s=>s.id));
+  const orphaned = [...hangarIds].filter(id => !validIds.has(id));
+  if(orphaned.length === 0) return;
+
+  let recovered = 0;
+  orphaned.forEach(id => hangarIds.delete(id));
+  savedHangarNames.forEach(name=>{
+    const match = SHIPS.find(s=>s.name === name);
+    if(match && !hangarIds.has(match.id)){ hangarIds.add(match.id); recovered++; }
+  });
+
+  if(recovered > 0){
+    saveHangar();
+    setStatus(`HANGAR RESTORED — ${recovered} ship${recovered===1?'':'s'} rematched after a data update`, "ok");
+    setTimeout(()=>{ const el=document.getElementById('status-banner'); if(el) el.style.display='none'; }, 4000);
+  }
+  updateHangarCount();
+}
+
+function saveHangar(){
+  if(!hangarAvailable) return;
+  try{
+    // Store names as well as IDs. The wiki API can regenerate UUIDs when the
+    // game data version changes, which would otherwise silently empty the
+    // hangar; names let us recover the selection.
+    const names = [...hangarIds]
+      .map(id => { const sh = SHIPS.find(x=>x.id===id); return sh ? sh.name : null; })
+      .filter(Boolean);
+    localStorage.setItem(HANGAR_KEY, JSON.stringify({ v:2, ids:[...hangarIds], names }));
+  }catch(err){
+    hangarAvailable = false;
+    setStatus("HANGAR STORAGE UNAVAILABLE — this browser is blocking local storage.", "error");
+  }
+}
+
+function toggleHangar(id){
+  if(hangarIds.has(id)) hangarIds.delete(id); else hangarIds.add(id);
+  saveHangar();
+  updateHangarCount();
+  renderList();
+}
+
+function updateHangarCount(){
+  document.getElementById('hangar-toggle-count').textContent = hangarIds.size;
+  if(typeof updateNavBadges === 'function') updateNavBadges();
+}
+
+function toggleCompare(id){
+  if(compareIds.has(id)){
+    compareIds.delete(id);
+  }else{
+    if(compareIds.size >= MAX_COMPARE){
+      setStatus(`YOU CAN COMPARE UP TO ${MAX_COMPARE} SHIPS — remove one first`, "error");
+      setTimeout(()=>{ document.getElementById('status-banner').style.display='none'; }, 2500);
+      return;
+    }
+    compareIds.add(id);
+  }
+  updateCompareBar();
+  renderList();
+}
+
+function clearCompare(){
+  compareIds.clear();
+  updateCompareBar();
+  renderList();
+  closeCompareView();
+}
+
+function updateHangarSummary(){
+  const el = document.getElementById('hangar-summary');
+  if(!viewingHangar){ el.classList.remove('visible'); return; }
+
+  const owned = [...hangarIds].map(id => SHIPS.find(s=>s.id===id)).filter(Boolean);
+  if(owned.length === 0){ el.classList.remove('visible'); return; }
+
+  let total = 0, priced = 0;
+  owned.forEach(s=>{
+    if(s.priceUSD != null){
+      total += s.priceUSD; priced++;
+    }
+  });
+  const unpriced = owned.length - priced;
+
+  el.classList.add('visible');
+  el.innerHTML = `
+    <div class="hs-row">
+      <div>
+        <div class="hs-label">Fleet Value (${priced} priced${unpriced ? `, ${unpriced} unknown` : ''})</div>
+        <div class="hs-value">${formatTotal(total)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="hs-label">Ships Owned</div>
+        <div class="hs-value" style="color:var(--cyan);">${owned.length}</div>
+      </div>
+    </div>
+    <button class="hs-copy" id="copy-hangar-btn">📋 COPY HANGAR LIST</button>
+  `;
+  document.getElementById('copy-hangar-btn').addEventListener('click', ()=>copyHangarList(owned, total));
+}
+
+async function copyHangarList(owned, total){
+  const lines = [
+    `MY STAR CITIZEN HANGAR (${owned.length} ships)`,
+    ...owned.map(s => `- ${s.name} (${s.manufacturer})${s.priceUSD != null ? ' — ' + formatPrice(s) : ''}`),
+    `Total fleet value: ${formatTotal(total)}`
+  ];
+  const text = lines.join('\n');
+  try{
+    await navigator.clipboard.writeText(text);
+    setStatus("HANGAR LIST COPIED TO CLIPBOARD", "ok");
+  }catch(err){
+    // Fallback for browsers without Clipboard API permission
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setStatus("HANGAR LIST COPIED TO CLIPBOARD", "ok");
+    }catch(err2){
+      setStatus("COULD NOT COPY — clipboard access blocked by browser", "error");
+    }
+  }
+  setTimeout(()=>{ document.getElementById('status-banner').style.display='none'; }, 2500);
+}
+
+function updateCompareBar(){
+  const bar = document.getElementById('compare-bar');
+  const label = document.getElementById('compare-bar-label');
+  const compareViewOpen = document.getElementById('compare-view').classList.contains('open');
+  bar.classList.toggle('visible', compareIds.size >= 1 && !compareViewOpen);
+  label.textContent = `${compareIds.size} / ${MAX_COMPARE} SELECTED`;
+}
+
+function fmt(n){ if(n===null||n===undefined) return "—"; return Number(n).toLocaleString(); }
+
+/* Escape any value coming from an external API before it reaches innerHTML.
+   The wiki and UEX feeds are community-editable, so treat them as untrusted. */
+function esc(v){
+  if(v === null || v === undefined) return '';
+  return String(v).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function setStatus(msg, cls){
+  const el = document.getElementById('status-banner');
+  el.textContent = msg; el.className = cls;
+}
+
+/* ---------- Extract lightweight hardpoint/component size summary from ports data ---------- */
+function extractPortSummary(v){
+  const hardpointSizes = new Set();
+  const componentSizesByType = {};
+  const portGroups = {};   // { type: { size: count } }
+  if(Array.isArray(v.ports)){
+    v.ports.forEach(p=>{
+      const size = p.sizes && p.sizes.max;
+      if(size){
+        hardpointSizes.add(size);
+        const t = p.type;
+        if(t){
+          if(!componentSizesByType[t]) componentSizesByType[t] = new Set();
+          componentSizesByType[t].add(size);
+          if(!portGroups[t]) portGroups[t] = {};
+          portGroups[t][size] = (portGroups[t][size] || 0) + 1;
+        }
+      }
+    });
+  }
+  return {
+    hardpointSizes: [...hardpointSizes].sort((a,b)=>a-b),
+    componentSizesByType: Object.fromEntries(
+      Object.entries(componentSizesByType).map(([k,set])=>[k, [...set].sort((a,b)=>a-b)])
+    ),
+    portGroups: portGroups
+  };
+}
+
+/* ---------- Map raw API vehicle record -> our ship shape ---------- */
+function mapVehicle(v){
+  const foci = (v.foci && v.foci[0] && v.foci[0].en_EN) || (v.type && v.type.en_EN) || v.classification || "Uncategorized";
+
+  // ---- Flight performance (agility, acceleration, boost) ----
+  const ag = v.agility || {};
+  const sp = v.speed || {};
+  let mainG = null, retroG = null, mavG = null;
+  if(v.propulsion && Array.isArray(v.propulsion.thrusters)){
+    v.propulsion.thrusters.forEach(t=>{
+      if(t.type === 'Main') mainG = t.g;
+      else if(t.type === 'Retro') retroG = t.g;
+      else if(t.type === 'Maneuver') mavG = t.g;
+    });
+  }
+
+  // Snub craft detection: small parasite fighters carried by larger ships.
+  // No dedicated API flag, so match on role/career/name text.
+  const snubHaystack = [
+    String(foci),
+    (v.career || ''),
+    (v.role || ''),
+    (v.name || '')
+  ].join(' ').toLowerCase();
+  const isSnub = /\bsnub\b/.test(snubHaystack);
+
+  // Ground vehicle detection. The API doesn't expose a single reliable boolean,
+  // so check the fields that do appear, then fall back to role keywords.
+  const typeStr = ((v.type && v.type.en_EN) || v.classification || '').toLowerCase();
+  const fociStr = String(foci).toLowerCase();
+  const isGroundVehicle =
+    v.is_ground_vehicle === true ||
+    v.is_spaceship === false ||
+    typeStr.includes('ground') || typeStr.includes('vehicle') ||
+    /\b(ground|rover|tank|buggy|bike|tracked|wheeled)\b/.test(fociStr);
+  const status = (v.production_status && v.production_status.en_EN) ? v.production_status.en_EN.toLowerCase().replace(/\s+/g,'-') : "unknown";
+  const img = (v.images && v.images[0]) ? (v.images[0].original_url || v.images[0].thumbnail_url) : null;
+  const thumb = (v.images && v.images[0]) ? (v.images[0].thumbnail_url || v.images[0].original_url) : null;
+
+  let weapons = [];
+  if(v.weaponry && v.weaponry.fixed_weapons && Array.isArray(v.weaponry.fixed_weapons.weapons)){
+    const counts = {};
+    v.weaponry.fixed_weapons.weapons.forEach(w=>{ counts[w.name] = (counts[w.name]||0)+1; });
+    weapons = Object.entries(counts).map(([name,count])=>`${count}x ${esc(name)}`);
+  }
+  if(v.weaponry && v.weaponry.missiles && v.weaponry.missiles.count){
+    weapons.push(`${v.weaponry.missiles.count}x Missile${v.weaponry.missiles.count>1?'s':''}`);
+  }
+
+  // Price: prefer top-level msrp, else fall back to the pledge-store SKU listing.
+  let priceUSD = null;
+  if(typeof v.msrp === 'number' && v.msrp > 0){
+    priceUSD = v.msrp;
+  }else if(Array.isArray(v.skus)){
+    const storeSku = v.skus.find(s => s.source === 'pledge_store' && typeof s.price === 'number' && s.price > 0)
+                  || v.skus.find(s => typeof s.price === 'number' && s.price > 0);
+    if(storeSku) priceUSD = storeSku.price;
+  }
+
+  // Pledge URL: prefer top-level, else fall back to any SKU that carries a store URL.
+  let pledge = v.pledge_url || null;
+  if(!pledge && Array.isArray(v.skus)){
+    const withUrl = v.skus.find(s => s.url);
+    if(withUrl) pledge = withUrl.url;
+  }
+
+  // Loaner ships. The API audit indicated loaners moved into the vehicle
+  // record, but the exact key is unconfirmed - check the plausible ones and
+  // accept either objects or plain strings.
+  let loaners = [];
+  const loanerSrc = v.loaners || v.loaner_vehicles || v.vehicle_loaners || v.loaner || null;
+  if(Array.isArray(loanerSrc)){
+    loaners = loanerSrc.map(l=>{
+      if(typeof l === 'string') return { name:l, slug:null };
+      return { name: l.name || l.vehicle_name || l.class_name || null,
+               slug: l.slug || null };
+    }).filter(l=>l.name);
+  }
+
+  // In-game aUEC purchase locations, if the ship is buyable in-game.
+  let uecPrice = null;
+  let uecLocations = [];
+  let uecRentals = [];
+  if(v.uex_prices){
+    if(Array.isArray(v.uex_prices.purchase)){
+      uecLocations = v.uex_prices.purchase
+        .filter(p => typeof p.price_buy === 'number' && p.price_buy > 0)
+        .map(p => ({
+          price: p.price_buy,
+          terminal: esc(p.terminal_name || p.terminal_code || 'Unknown terminal'),
+          location: esc((p.starmap_location && p.starmap_location.name) || null) || null,
+          parent: esc((p.starmap_location && p.starmap_location.parent_name) || null) || null,
+          system: esc((p.starmap_location && p.starmap_location.star_system_name) || null) || null,
+          updated: p.date_updated || null
+        }));
+      if(uecLocations.length) uecPrice = Math.min(...uecLocations.map(l=>l.price));
+    }
+    if(Array.isArray(v.uex_prices.rental)){
+      uecRentals = v.uex_prices.rental
+        .filter(p => typeof p.price_rent === 'number' && p.price_rent > 0)
+        .map(p => ({
+          price: p.price_rent,
+          terminal: esc(p.terminal_name || p.terminal_code || 'Unknown terminal'),
+          location: esc((p.starmap_location && p.starmap_location.name) || null) || null,
+          system: esc((p.starmap_location && p.starmap_location.star_system_name) || null) || null
+        }));
+    }
+  }
+
+  return {
+    id: v.uuid || v.slug || v.class_name,
+    slug: v.slug,
+    className: v.class_name || null,
+    name: esc(v.name || v.class_name),
+    manufacturer: esc((v.manufacturer && v.manufacturer.name) || "Unknown"),
+    manufacturerCode: (v.manufacturer && v.manufacturer.code) || null,
+    manufacturerLink: (v.manufacturer && v.manufacturer.link) || null,
+    role: esc(foci),
+    isGroundVehicle: isGroundVehicle,
+    isSnub: isSnub,
+    pitch: ag.pitch ?? null,
+    yaw: ag.yaw ?? null,
+    roll: ag.roll ?? null,
+    pitchBoosted: ag.pitch_boosted ?? null,
+    yawBoosted: ag.yaw_boosted ?? null,
+    rollBoosted: ag.roll_boosted ?? null,
+    boostForward: sp.boost_forward ?? null,
+    boostBackward: sp.boost_backward ?? null,
+    zeroToScm: sp.zero_to_scm ?? null,
+    zeroToMax: sp.zero_to_max ?? null,
+    accelMain: mainG,
+    accelRetro: retroG,
+    accelManeuver: mavG,
+    seats: (v.crew && typeof v.crew === 'object') ? v.crew.max : (typeof v.crew === 'number' ? v.crew : null),
+    status: status,
+    image: img,
+    thumb: thumb,
+    crewMin: (v.crew && typeof v.crew === 'object') ? v.crew.min : (typeof v.crew === 'number' ? v.crew : null),
+    crewMax: (v.crew && typeof v.crew === 'object') ? v.crew.max : (typeof v.crew === 'number' ? v.crew : null),
+    cargoSCU: v.cargo_capacity || 0,
+    length: v.dimension ? v.dimension.length : (v.sizes ? v.sizes.length : null),
+    beam: v.dimension ? v.dimension.width : (v.sizes ? v.sizes.beam : null),
+    height: v.dimension ? v.dimension.height : (v.sizes ? v.sizes.height : null),
+    mass: v.mass_total || v.mass || null,
+    scmSpeed: v.speed ? v.speed.scm : null,
+    maxSpeed: v.speed ? v.speed.max : null,
+    health: v.health || null,
+    shieldHP: v.shield_hp || null,
+    weapons: weapons,
+    priceUSD: priceUSD,
+    price: priceUSD != null ? `$${priceUSD}` : null,
+    uecPrice: uecPrice,
+    uecLocations: uecLocations,
+    uecRentals: uecRentals,
+    loaners: loaners,
+    focus: esc((v.description && v.description.en_EN) ? v.description.en_EN : "No description available."),
+    pledgeUrl: pledge,
+    wikiUrl: v.web_url || null,
+    hasMedbed: !!(v.max_medical_tier) || !!(v.seating && v.seating.medical_beds && Object.keys(v.seating.medical_beds).length > 0),
+    medbedTiers: (v.seating && v.seating.medical_beds) ? Object.keys(v.seating.medical_beds) : (v.max_medical_tier ? [v.max_medical_tier] : []),
+    hasBed: !!(v.seating && v.seating.beds > 0),
+    hasCargoGrid: !!(v.cargo_grids && v.cargo_grids.length > 0),
+    ...extractPortSummary(v)
+  };
+}
+
+/* ---------- Data completeness ----------
+   Some ships (especially capitals and unreleased concepts) have very sparse
+   records upstream. We surface that explicitly so a gap in the source data
+   doesn't look like a broken app. */
+function dataCompleteness(s){
+  const coreFields = [s.scmSpeed, s.maxSpeed, s.health, s.shieldHP, s.mass, s.length, s.priceUSD];
+  const present = coreFields.filter(f => f != null && f !== 0).length;
+  return { present, total: coreFields.length, sparse: present <= 3 };
+}
+
+/* ---------- Currency conversion ----------
+   NOTE: CIG prices ships in USD. These are approximate static conversion rates
+   for convenience only — they are NOT live exchange rates and will drift over
+   time. The USD figure is always the authoritative one. RSI also applies its
+   own regional pricing and VAT, so their checkout total will differ from a
+   straight conversion. */
+const CURRENCIES = {
+  USD: { symbol:'$',   rate:1,     label:'USD' },
+  EUR: { symbol:'€',   rate:0.92,  label:'EUR' },
+  GBP: { symbol:'£',   rate:0.79,  label:'GBP' },
+  CAD: { symbol:'C$',  rate:1.37,  label:'CAD' },
+  AUD: { symbol:'A$',  rate:1.52,  label:'AUD' },
+  UEC: { symbol:'',    rate:null,  label:'UEC (in-game)' }
+};
+let activeCurrency = 'USD';
+
+function formatPrice(ship){
+  if(activeCurrency === 'UEC'){
+    return ship.uecPrice != null ? `${ship.uecPrice.toLocaleString()} UEC` : 'Not sold in-game';
+  }
+  if(ship.priceUSD == null) return '—';
+  const c = CURRENCIES[activeCurrency];
+  const converted = ship.priceUSD * c.rate;
+  return `${c.symbol}${converted.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+}
+
+function formatTotal(totalUSD){
+  if(activeCurrency === 'UEC') return `${totalUSD.toLocaleString()} (USD basis)`;
+  const c = CURRENCIES[activeCurrency];
+  return `${c.symbol}${(totalUSD * c.rate).toLocaleString(undefined,{maximumFractionDigits:0})}`;
+}
+
+/* ---------- Fetch full roster from the live wiki API ---------- */
+async function fetchAllShips(){
+  setStatus("CONNECTING TO api.star-citizen.wiki …", "loading");
+  SHIPS = [];
+  let page = 1;
+  let gotAnyPage = false;
+
+  while(page <= MAX_PAGES){
+    const url = `${API_BASE}?page[number]=${page}&page[size]=${PAGE_SIZE}`;
+    try{
+      const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const data = json.data || [];
+      if(data.length === 0) break;
+
+      SHIPS = SHIPS.concat(data.map(mapVehicle));
+      gotAnyPage = true;
+
+      // Surface which game data version the roster reflects, so missing
+      // newly-announced ships are explainable rather than mysterious.
+      if(data[0] && data[0].version){
+        document.getElementById('data-version').textContent = `GAME DATA ${data[0].version}`;
+      }
+
+      // Progressive render: show ships as soon as the first page lands,
+      // don't make the user wait for the whole roster.
+      document.getElementById('skeleton').style.display = 'none';
+      document.getElementById('ship-count').textContent = `${SHIPS.length} SHIPS`;
+      setStatus(`LOADING ROSTER… ${SHIPS.length} VESSELS INDEXED (page ${page})`, "loading");
+      buildRoleFilters();
+      buildStatusFilters();
+      renderList();
+
+      const lastPage = json.meta && (json.meta.last_page || (json.meta.pagination && json.meta.pagination.last_page));
+      if(!lastPage || page >= lastPage || data.length < PAGE_SIZE){
+        setStatus(`LIVE ROSTER LOADED — ${SHIPS.length} VESSELS`, "ok");
+        break;
+      }
+      page++;
+    }catch(err){
+      // Stop paging on error, but KEEP whatever pages already loaded successfully
+      // rather than discarding progress.
+      if(!gotAnyPage){
+        setStatus(`LIVE FETCH FAILED (${err.message}) — showing sample data instead.`, "error");
+        SHIPS = FALLBACK_SHIPS;
+      }else{
+        setStatus(`LOADED ${SHIPS.length} VESSELS — stopped early (${err.message})`, "error");
+      }
+      break;
+    }
+  }
+
+  document.getElementById('skeleton').style.display = 'none';
+  document.getElementById('ship-count').textContent = `${SHIPS.length} SHIPS`;
+  if(gotAnyPage){
+    SHIPS = dedupeByName(SHIPS);
+    backfillVariantImages(SHIPS);
+    populateDockShipSelect();
+    populateManufacturerFilter();
+    setTimeout(()=>{ 
+      const el = document.getElementById('status-banner');
+      if(el.classList.contains('ok') || el.classList.contains('loading')) el.style.display='none';
+    }, 4000);
+  }
+  reconcileHangar();
+  applyHashRoute();
+  buildRoleFilters();
+  buildStatusFilters();
+  renderList();
+  if(document.getElementById('home-view').classList.contains('open')) renderHome();
+}
+
+function populateManufacturerFilter(){
+  const sel = document.getElementById('mfg-filter');
+  if(!sel) return;
+  const counts = {};
+  SHIPS.forEach(s=>{ counts[s.manufacturer] = (counts[s.manufacturer]||0) + 1; });
+  const names = Object.keys(counts).sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = `<option value="ALL">All manufacturers (${SHIPS.length})</option>` +
+    names.map(n=>`<option value="${esc(n)}"${n===activeManufacturer?' selected':''}>${esc(n)} (${counts[n]})</option>`).join('');
+}
+
+function populateDockShipSelect(){
+  const sel = document.getElementById('adv-dock-ship');
+  const sorted = [...SHIPS].sort((a,b)=>a.name.localeCompare(b.name));
+  sel.innerHTML = `<option value="OFF">Off</option>` +
+    sorted.map(s => `<option value="${s.id}">${s.name} (${s.manufacturer})</option>`).join('');
+}
+
+/* ---------- Collapse duplicate entries that share an identical display name ---------- */
+/* The source data carries separate records per store SKU (different paint jobs,
+   subscriber flair, etc.) that often don't get a distinct name — e.g. three
+   separate "Idris-P" entries. We keep the single best-quality record per name. */
+function scoreShip(s){
+  let sc = 0;
+  if(s.image) sc += 10;
+  if(s.price) sc += 2;
+  if(s.pledgeUrl) sc += 2;
+  if(s.wikiUrl) sc += 1;
+  if(s.focus && s.focus !== "No description available.") sc += 2;
+  if(s.weapons && s.weapons.length) sc += 1;
+  return sc;
+}
+
+function dedupeByName(ships){
+  const groups = {};
+  ships.forEach(s=>{
+    const key = (s.manufacturer + '::' + s.name).trim().toLowerCase();
+    (groups[key] = groups[key] || []).push(s);
+  });
+  const result = [];
+  Object.values(groups).forEach(group=>{
+    if(group.length === 1){ result.push(group[0]); return; }
+    let best = group[0], bestScore = scoreShip(best);
+    for(let i=1;i<group.length;i++){
+      const sc = scoreShip(group[i]);
+      if(sc > bestScore){ best = group[i]; bestScore = sc; }
+    }
+    result.push(best);
+  });
+  return result;
+}
+
+/* ---------- Borrow base-ship image for variant/livery entries with no photo ---------- */
+function backfillVariantImages(ships){
+  // Sort candidates by name length ascending so we prefer matching the shortest
+  // (most "base") name as the parent when multiple partial matches exist.
+  const byManufacturer = {};
+  ships.forEach(s=>{
+    if(!s.image) return;
+    (byManufacturer[s.manufacturer] = byManufacturer[s.manufacturer] || []).push(s);
+  });
+  Object.values(byManufacturer).forEach(list=> list.sort((a,b)=> a.name.length - b.name.length));
+
+  ships.forEach(s=>{
+    if(s.image) return;
+    const candidates = byManufacturer[s.manufacturer];
+    if(!candidates) return;
+    const parent = candidates.find(c => c.id !== s.id && s.name.startsWith(c.name + ' '));
+    if(parent){
+      s.image = parent.image;
+      s.thumb = parent.thumb;
+      s.imageBorrowed = true;
+    }
+  });
+}
+const FALLBACK_SHIPS = [
+  { id:"fb-carrack", name:"Carrack", manufacturer:"Anvil Aerospace", role:"Exploration", status:"flight-ready",
+    image:null, thumb:null, crewMin:6, crewMax:12, cargoSCU:456, length:126, beam:74, height:30, mass:3275858,
+    scmSpeed:140, maxSpeed:1050, health:88000, shieldHP:144000, weapons:["Manned & remote turrets"], price:"$800",
+    focus:"Long-range multi-crew explorer. (Sample data — live API unreachable in this environment.)", pledgeUrl:null, wikiUrl:null },
+  { id:"fb-cutlass", name:"Cutlass Black", manufacturer:"Drake Interplanetary", role:"Multi-Role", status:"flight-ready",
+    image:null, thumb:null, crewMin:1, crewMax:4, cargoSCU:46, length:29.6, beam:22.1, height:6.7, mass:110000,
+    scmSpeed:170, maxSpeed:1080, health:19000, shieldHP:24000, weapons:["Fixed nose guns","Manned turret"], price:"$110",
+    focus:"Rugged do-everything gunship. (Sample data — live API unreachable in this environment.)", pledgeUrl:null, wikiUrl:null },
+  { id:"fb-avenger", name:"Avenger Titan", manufacturer:"Aegis Dynamics", role:"Light Fighter", status:"flight-ready",
+    image:null, thumb:null, crewMin:1, crewMax:1, cargoSCU:8, length:20, beam:15, height:6.5, mass:48987,
+    scmSpeed:262, maxSpeed:1425, health:11900, shieldHP:4320, weapons:["Fixed nose guns","Missile rack"], price:"$60",
+    focus:"Starter-friendly light fighter with a small cargo hold. (Sample data — live API unreachable in this environment.)", pledgeUrl:null, wikiUrl:null },
+  { id:"fb-freelancer", name:"Freelancer", manufacturer:"MISC", role:"Cargo", status:"flight-ready",
+    image:null, thumb:null, crewMin:2, crewMax:4, cargoSCU:66, length:31.4, beam:26.3, height:9.3, mass:129000,
+    scmSpeed:158, maxSpeed:1050, health:22000, shieldHP:28000, weapons:["Fixed nose guns","Manned turret"], price:"$110",
+    focus:"Mid-size trade ship with real cargo capacity. (Sample data — live API unreachable in this environment.)", pledgeUrl:null, wikiUrl:null }
+];
+
+/* ---------- Filters / list rendering ---------- */
+function buildRoleFilters(){
+  const roles = ["ALL", ...new Set(SHIPS.map(s=>s.role).filter(Boolean))].sort((a,b)=> a==="ALL"?-1: a.localeCompare(b));
+  const el = document.getElementById('filters');
+  el.innerHTML = roles.map(r=>`<button class="chip ${r===activeRole?'active':''}" data-role="${r}">${r}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>c.addEventListener('click', ()=>{
+    activeRole = c.dataset.role; buildRoleFilters(); renderList();
+  }));
+}
+
+function buildStatusFilters(){
+  const statuses = ["ALL", ...new Set(SHIPS.map(s=>s.status).filter(Boolean))];
+  const el = document.getElementById('status-filters');
+  el.innerHTML = statuses.map(s=>`<button class="chip ${s===activeStatus?'active':''}" data-status="${s}">${s==='ALL'?'ALL STATUSES':s.replace(/-/g,' ')}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>c.addEventListener('click', ()=>{
+    activeStatus = c.dataset.status; buildStatusFilters(); renderList();
+  }));
+}
+
+function sortShips(list){
+  const arr = [...list];
+  if(sortKey==="name") arr.sort((a,b)=> a.name.localeCompare(b.name));
+  if(sortKey==="manufacturer") arr.sort((a,b)=> a.manufacturer.localeCompare(b.manufacturer) || a.name.localeCompare(b.name));
+  if(sortKey==="cargo") arr.sort((a,b)=> (b.cargoSCU||0) - (a.cargoSCU||0));
+  if(sortKey==="price") arr.sort((a,b)=>{
+    const pa = a.priceUSD != null ? a.priceUSD : -1;
+    const pb = b.priceUSD != null ? b.priceUSD : -1;
+    return pb - pa;
+  });
+  return arr;
+}
+
+function matchSeatBand(seats, band){
+  if(band === 'ANY') return true;
+  if(seats == null) return false;
+  if(band === '1') return seats === 1;
+  if(band === '2') return seats === 2;
+  if(band === '3-4') return seats >= 3 && seats <= 4;
+  if(band === '5-9') return seats >= 5 && seats <= 9;
+  if(band === '10+') return seats >= 10;
+  return true;
+}
+
+function countActiveFilters(){
+  let n = 0;
+  if(activeRole !== 'ALL') n++;
+  if(activeManufacturer !== 'ALL') n++;
+  if(activeStatus !== 'ALL') n++;
+  if(seatFilter !== 'ANY') n++;
+  if(excludeGround) n++;
+  if(excludeSnub) n++;
+  if(minCargoFilter > 0) n++;
+  if(advMedbed !== 'OFF') n++;
+  if(advBed) n++;
+  if(advCargoGrid) n++;
+  if(advBuyable) n++;
+  if(advHardpointSize !== 'OFF') n++;
+  if(advCompType !== 'OFF' && advCompSize !== 'OFF') n++;
+  if(advDockShip !== 'OFF') n++;
+  if(fminScm > 0) n++;
+  if(fminPitch > 0) n++;
+  if(fminYaw > 0) n++;
+  if(fminRoll > 0) n++;
+  if(fminAccel > 0) n++;
+  return n;
+}
+
+function updateActiveFilterBadge(){
+  const el = document.getElementById('active-filter-count');
+  if(!el) return;
+  const n = countActiveFilters();
+  el.textContent = n;
+  el.style.display = n > 0 ? '' : 'none';
+}
+
+function getFilteredShips(){
+  const q = activeQuery.trim().toLowerCase();
+  const dockTarget = advDockShip !== 'OFF' ? SHIPS.find(x=>x.id===advDockShip) : null;
+
+  let filtered = SHIPS.filter(s=>{
+    const roleMatch = activeRole==="ALL" || s.role===activeRole;
+    const mfgMatch = activeManufacturer==="ALL" || s.manufacturer===activeManufacturer;
+    const statusMatch = activeStatus==="ALL" || s.status===activeStatus;
+    const qMatch = !q || s.name.toLowerCase().includes(q) || s.manufacturer.toLowerCase().includes(q);
+    const hangarMatch = !viewingHangar || hangarIds.has(s.id);
+    const cargoMatch = (s.cargoSCU||0) >= minCargoFilter;
+    const seats = s.seats != null ? s.seats : (s.crewMax != null ? s.crewMax : null);
+    const crewMatch = matchSeatBand(seats, seatFilter);
+    const groundMatch = !excludeGround || !s.isGroundVehicle;
+    const snubMatch = !excludeSnub || !s.isSnub;
+    // Flight minimums: a ship with no data for a stat is excluded once that
+    // filter is active, since we can't verify it meets the threshold.
+    const flightMatch =
+      (fminScm   === 0 || (s.scmSpeed  != null && s.scmSpeed  >= fminScm)) &&
+      (fminPitch === 0 || (s.pitch     != null && s.pitch     >= fminPitch)) &&
+      (fminYaw   === 0 || (s.yaw       != null && s.yaw       >= fminYaw)) &&
+      (fminRoll  === 0 || (s.roll      != null && s.roll      >= fminRoll)) &&
+      (fminAccel === 0 || (s.accelMain != null && s.accelMain >= fminAccel));
+
+    const medbedMatch = advMedbed === 'OFF' || (advMedbed === 'ANY' ? s.hasMedbed : (s.medbedTiers||[]).includes(advMedbed));
+    const bedMatch = !advBed || s.hasBed;
+    const cargoGridMatch = !advCargoGrid || s.hasCargoGrid;
+    const buyableMatch = !advBuyable || (s.uecLocations && s.uecLocations.length > 0);
+    const hardpointMatch = advHardpointSize === 'OFF' || (s.hardpointSizes||[]).includes(Number(advHardpointSize));
+    const componentMatch = (advCompType === 'OFF' || advCompSize === 'OFF')
+      ? true
+      : ((s.componentSizesByType && s.componentSizesByType[advCompType]) || []).includes(Number(advCompSize));
+    const dockMatch = !dockTarget || (
+      s.id !== dockTarget.id &&
+      (s.length||0) <= (dockTarget.length||Infinity) &&
+      (s.beam||0) <= (dockTarget.beam||Infinity) &&
+      (s.height||0) <= (dockTarget.height||Infinity)
+    );
+
+    return roleMatch && mfgMatch && statusMatch && qMatch && hangarMatch && cargoMatch && crewMatch
+      && medbedMatch && bedMatch && cargoGridMatch && buyableMatch && hardpointMatch && componentMatch && dockMatch && groundMatch && snubMatch && flightMatch;
+  });
+  return sortShips(filtered);
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  const filtered = getFilteredShips();
+
+  if(filtered.length===0){
+    if(viewingHangar){
+      list.innerHTML = `<div class="empty-state">YOUR HANGAR IS EMPTY<br>Tap the ☆ on any ship to add it here</div>`;
+    }else{
+      list.innerHTML = `<div class="empty-state">NO VESSELS MATCH QUERY<br>[ ${SHIPS.length} SHIPS IN REGISTRY ]</div>`;
+    }
+    updateHangarSummary();
+    updateActiveFilterBadge();
+    return;
+  }
+
+  list.innerHTML = filtered.map(s=>`
+    <div class="row" data-id="${s.id}">
+      <div class="thumb">
+        ${s.thumb ? `<img src="${s.thumb}" alt="" loading="lazy" onerror="this.parentElement.textContent='${(s.manufacturer||'').split(' ').map(w=>w[0]).join('').slice(0,2)}';">` : (s.manufacturer||'').split(' ').map(w=>w[0]).join('').slice(0,2)}
+      </div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="manu">${s.manufacturer} · ${fmt(s.cargoSCU)} SCU · ${(s.seats!=null? s.seats : (s.crewMax!=null? s.crewMax : '—'))} seat${s.seats===1?'':'s'}${dataCompleteness(s).sparse ? ' <span style="color:var(--amber);" title="Limited data upstream">◍</span>' : ''}</div>
+      </div>
+      <button class="hangar-star ${hangarIds.has(s.id)?'in-hangar':''}" data-hangar-id="${s.id}" aria-label="Toggle hangar">${hangarIds.has(s.id)?'★':'☆'}</button>
+      <button class="compare-btn ${compareIds.has(s.id)?'selected':''}" data-compare-id="${s.id}" aria-label="Toggle compare">${compareIds.has(s.id)?'✓':'+'}</button>
+      <div class="role">${s.role}</div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.row').forEach(r=>r.addEventListener('click', (e)=>{
+    if(e.target.closest('.hangar-star') || e.target.closest('.compare-btn')) return;
+    openDetail(r.dataset.id);
+  }));
+  list.querySelectorAll('.hangar-star').forEach(btn=>btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    toggleHangar(btn.dataset.hangarId);
+  }));
+  list.querySelectorAll('.compare-btn').forEach(btn=>btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    toggleCompare(btn.dataset.compareId);
+  }));
+  updateHangarSummary();
+  updateActiveFilterBadge();
+}
+
+function renderSimilarShips(current){
+  const candidates = SHIPS
+    .filter(s => s.id !== current.id && s.role === current.role)
+    .sort((a,b) => Math.abs((a.cargoSCU||0) - (current.cargoSCU||0)) - Math.abs((b.cargoSCU||0) - (current.cargoSCU||0)))
+    .slice(0, 3);
+
+  if(candidates.length === 0) return '';
+
+  return `
+    <div class="section-label">Similar Ships</div>
+    <div class="similar-list">
+      ${candidates.map(c => `
+        <div class="similar-row" data-similar-id="${c.id}">
+          <div class="sim-thumb">${c.thumb ? `<img src="${c.thumb}" alt="">` : (c.manufacturer||'').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+          <div>
+            <div class="sim-name">${c.name}</div>
+            <div class="sim-meta">${c.manufacturer} · ${fmt(c.cargoSCU)} SCU</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* Human-friendly labels for the API's port type strings. Anything not listed
+   falls back to the raw type with spaces inserted, rather than being hidden. */
+const PORT_LABELS = {
+  WeaponGun:'Weapons', Turret:'Turrets', TurretBase:'Turrets',
+  MissileLauncher:'Missile Racks', Missile:'Missiles',
+  Shield:'Shield Generators', PowerPlant:'Power Plants', Cooler:'Coolers',
+  QuantumDrive:'Quantum Drives', FuelIntake:'Fuel Intakes', FuelTank:'Fuel Tanks',
+  QuantumFuelTank:'Quantum Fuel Tanks', MainThruster:'Main Thrusters',
+  ManneuverThruster:'Maneuvering Thrusters', ManeuverThruster:'Maneuvering Thrusters',
+  Radar:'Radar', Computer:'Computers', SelfDestruct:'Self Destruct',
+  Cargo:'Cargo Grids', Countermeasure:'Countermeasures', Ping:'Ping',
+  Scanner:'Scanners', MiningArm:'Mining Arms', SalvageModifier:'Salvage Gear',
+  TractorBeam:'Tractor Beams', Seat:'Seats', Bed:'Beds', Door:'Doors',
+  Light:'Lights', Armor:'Armor', Paint:'Paint'
+};
+
+// Order the important stuff first; everything else follows alphabetically.
+const PORT_ORDER = ['WeaponGun','Turret','TurretBase','MissileLauncher','Missile',
+  'Shield','PowerPlant','Cooler','QuantumDrive','MainThruster','ManneuverThruster',
+  'ManeuverThruster','Radar','Countermeasure','FuelTank','QuantumFuelTank','FuelIntake'];
+
+function prettyPortType(t){
+  if(PORT_LABELS[t]) return PORT_LABELS[t];
+  return String(t).replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
+/* Build Erkul's ship identifier.
+   Verified format: https://erkul.games/ships?ship=orig_100i
+   i.e. lowercase manufacturer code + underscore + ship name.
+   The wiki API's class_name ("ORIG_100i") maps directly; slug ("orig-100i")
+   needs hyphens swapped. Falls back to manufacturer code + name. */
+const MFG_CODE_FALLBACK = {
+  'Origin Jumpworks':'ORIG', 'Anvil Aerospace':'ANVL', 'Aegis Dynamics':'AEGS',
+  'Drake Interplanetary':'DRAK', 'Roberts Space Industries':'RSI',
+  'Musashi Industrial & Starflight Concern':'MISC', 'MISC':'MISC',
+  'Consolidated Outland':'CNOU', 'Crusader Industries':'CRUS',
+  'Argo Astronautics':'ARGO', 'Esperia':'ESPR', 'Banu':'BANU',
+  'Kruger Intergalactic':'KRIG', 'Tumbril Land Systems':'TMBL',
+  'Greycat Industrial':'GRIN', 'Mirai':'MRAI', 'Vanduul':'VNCL',
+  'Aopoa':'XIAN', 'Gatac Manufacture':'GATA', 'RSI':'RSI'
+};
+
+function erkulShipId(s){
+  // Preferred: the game class name, which is already CODE_Name
+  if(s.className && /_/.test(s.className)){
+    return s.className.toLowerCase();
+  }
+  // Next: the wiki slug, which is code-name
+  if(s.slug && /-/.test(s.slug)){
+    return s.slug.toLowerCase().replace(/-/g, '_');
+  }
+  // Last resort: assemble from manufacturer code + name
+  const code = s.manufacturerCode || MFG_CODE_FALLBACK[s.manufacturer];
+  if(code && s.name){
+    const namePart = String(s.name).trim().replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '');
+    return (code + '_' + namePart).toLowerCase();
+  }
+  return null;
+}
+
+/* External tool links.
+   VERIFIED: spviewer.eu/performance?ship=<id>  (aegs_avenger_stalker)
+   Erkul's calculator takes no ship parameter, so it links to the tool root
+   and tells the user to search.
+   Erkul's Ship Finder is deliberately NOT linked: VERSEDEX already shows
+   in-game buy/rent locations and prices per terminal, so it would be
+   redundant. erkulShipId is still used to build the SPViewer link. */
+function erkulCalculatorUrl(){
+  return 'https://erkul.games/calculator';
+}
+
+/* VERIFIED: spviewer.eu/performance?ship=aegs_avenger_stalker
+   Uses the same manufacturer-code + name convention as Erkul, so erkulShipId
+   serves both. */
+function spviewerUrl(s){
+  const id = erkulShipId(s);
+  return id ? `https://www.spviewer.eu/performance?ship=${encodeURIComponent(id)}`
+            : 'https://www.spviewer.eu/performance';
+}
+
+function renderHardpoints(s){
+  const groups = s.portGroups || {};
+  const types = Object.keys(groups);
+  if(types.length === 0) return '';
+
+  types.sort((a,b)=>{
+    const ia = PORT_ORDER.indexOf(a), ib = PORT_ORDER.indexOf(b);
+    if(ia !== -1 && ib !== -1) return ia - ib;
+    if(ia !== -1) return -1;
+    if(ib !== -1) return 1;
+    return prettyPortType(a).localeCompare(prettyPortType(b));
+  });
+
+  const rows = types.map(type=>{
+    const sizes = Object.keys(groups[type]).map(Number).sort((a,b)=>b-a);
+    const total = sizes.reduce((acc,sz)=>acc + groups[type][sz], 0);
+    const chips = sizes.map(sz=>
+      `<span class="hp-chip">${groups[type][sz]}× <strong>S${sz}</strong></span>`).join('');
+    return `
+      <div class="hp-row">
+        <div class="hp-type">
+          <div class="hp-name">${prettyPortType(type)}</div>
+          <div class="hp-total">${total} slot${total===1?'':'s'}</div>
+        </div>
+        <div class="hp-chips">${chips}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-label">Hardpoints &amp; Slots</div>
+    <div class="hp-list">${rows}</div>
+    <div class="ext-tools">
+      <a class="ext-link" href="${erkulCalculatorUrl()}" target="_blank" rel="noopener">
+        <div class="ext-name">Erkul <span>↗</span></div>
+        <div class="ext-desc">Fit a loadout — DPS, shields, power draw. Search for ${esc(s.name)} once open.</div>
+      </a>
+      <a class="ext-link" href="${spviewerUrl(s)}" target="_blank" rel="noopener">
+        <div class="ext-name">SPViewer <span>↗</span></div>
+        <div class="ext-desc">Opens on ${esc(s.name)}. Fuel, quantum range, capacitors and endurance.</div>
+      </a>
+    </div>
+    <div class="tool-note" style="padding:8px 16px 0;">
+      Slot sizes come from the ship's game data. For building loadouts or digging into raw
+      performance, these tools are the community standard — VERSEDEX links out rather than duplicating them.
+    </div>
+  `;
+}
+
+function renderFlightPerformance(s){
+  const has = [s.pitch, s.yaw, s.roll, s.accelMain, s.boostForward, s.zeroToScm]
+    .some(v => v != null && v !== 0);
+  if(!has) return '';
+
+  const n = (v, d=1) => v == null ? '—' : Number(v).toFixed(d).replace(/\.0$/,'');
+
+  const rows = [];
+
+  if(s.scmSpeed != null || s.boostForward != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">SCM / Forward Boost</div></div>
+      <div class="fp-val">${s.scmSpeed!=null?fmt(s.scmSpeed):'—'} / ${s.boostForward!=null?fmt(s.boostForward):'—'}<small>m/s</small></div>
+    </div>`);
+  }
+  if(s.maxSpeed != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">NAV Max</div></div>
+      <div class="fp-val">${fmt(s.maxSpeed)}<small>m/s</small></div>
+    </div>`);
+  }
+  if(s.zeroToScm != null || s.zeroToMax != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">0 → SCM / 0 → NAV</div></div>
+      <div class="fp-val">${n(s.zeroToScm,2)} / ${n(s.zeroToMax,2)}<small>s</small></div>
+    </div>`);
+  }
+  if(s.pitch != null || s.yaw != null || s.roll != null){
+    rows.push(`<div class="fp-row">
+      <div>
+        <div class="fp-label">Pitch / Yaw / Roll</div>
+        ${(s.pitchBoosted!=null)?`<div class="fp-sub">Boosted values in cyan</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div class="fp-val">${n(s.pitch)} / ${n(s.yaw)} / ${n(s.roll)}<small>°/s</small></div>
+        ${(s.pitchBoosted!=null)?`<div class="fp-val"><span class="boosted">${n(s.pitchBoosted)} / ${n(s.yawBoosted)} / ${n(s.rollBoosted)}</span><small>°/s</small></div>`:''}
+      </div>
+    </div>`);
+  }
+  if(s.accelMain != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">Main Acceleration</div></div>
+      <div class="fp-val">${n(s.accelMain,2)}<small>G</small></div>
+    </div>`);
+  }
+  if(s.accelRetro != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">Retro Acceleration</div></div>
+      <div class="fp-val">${n(s.accelRetro,2)}<small>G</small></div>
+    </div>`);
+  }
+  if(s.accelManeuver != null){
+    rows.push(`<div class="fp-row">
+      <div><div class="fp-label">Maneuvering Thrust</div></div>
+      <div class="fp-val">${n(s.accelManeuver,2)}<small>G</small></div>
+    </div>`);
+  }
+
+  return `
+    <div class="section-label">Flight Performance</div>
+    <div class="flight-panel">${rows.join('')}</div>
+  `;
+}
+
+function renderInGamePurchase(s){
+  if((!s.uecLocations || s.uecLocations.length === 0) && (!s.uecRentals || s.uecRentals.length === 0)){
+    return `
+      <div class="section-label">In-Game Purchase</div>
+      <div style="padding:0 16px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); line-height:1.6;">
+        Not currently sold or rentable in-game — pledge store only.
+      </div>`;
+  }
+
+  const buyRows = (s.uecLocations||[]).map(l => `
+    <div class="uec-row">
+      <div class="uec-loc">
+        <div class="uec-terminal">${l.terminal}</div>
+        <div class="uec-place">${[l.location, l.parent, l.system].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div class="uec-price">${l.price.toLocaleString()} <small>aUEC</small></div>
+    </div>`).join('');
+
+  const rentRows = (s.uecRentals||[]).map(l => `
+    <div class="uec-row">
+      <div class="uec-loc">
+        <div class="uec-terminal">${l.terminal}</div>
+        <div class="uec-place">${[l.location, l.system].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div class="uec-price" style="color:var(--cyan);">${l.price.toLocaleString()} <small>aUEC/day</small></div>
+    </div>`).join('');
+
+  return `
+    ${buyRows ? `
+      <div class="section-label">Buy In-Game (${s.uecLocations.length} location${s.uecLocations.length===1?'':'s'})</div>
+      <div class="uec-list">${buyRows}</div>` : ''}
+    ${rentRows ? `
+      <div class="section-label">Rent In-Game</div>
+      <div class="uec-list">${rentRows}</div>` : ''}
+    ${renderRentVsBuy(s)}
+    <div style="padding:8px 16px 0; font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); line-height:1.5;">
+      In-game prices sourced via UEX and can shift between patches.
+    </div>
+  `;
+}
+
+/* Rent vs buy: how many days of renting equals the purchase price. */
+function renderRentVsBuy(s){
+  const buy = s.uecPrice;
+  const rentals = (s.uecRentals || []).filter(r=>r.price > 0);
+  if(!buy || rentals.length === 0) return '';
+
+  const cheapestRent = Math.min(...rentals.map(r=>r.price));
+  const days = Math.floor(buy / cheapestRent);
+  if(!isFinite(days) || days <= 0) return '';
+
+  return `
+    <div class="section-label">Rent or Buy?</div>
+    <div class="rvb-panel">
+      <div class="rvb-headline">Renting is cheaper for the first <span>${fmt(days)}</span> day${days===1?'':'s'}</div>
+      <div class="rvb-line"><span>Cheapest rental</span><strong>${fmt(cheapestRent)} aUEC/day</strong></div>
+      <div class="rvb-line"><span>Purchase price</span><strong>${fmt(buy)} aUEC</strong></div>
+      <div class="rvb-line"><span>Break-even</span><strong>day ${fmt(days + 1)}</strong></div>
+      <div class="rvb-bar">
+        <div class="rvb-fill" style="width:${Math.min(100, Math.round(days / (days + 10) * 100))}%;"></div>
+      </div>
+      <div class="rvb-note">Rent for short jobs, buy if you'll use it beyond ${fmt(days)} days. Rentals don't accrue toward ownership.</div>
+    </div>`;
+}
+
+/* Loaner ships granted while a pledge isn't flyable yet. */
+function renderLoaners(s){
+  if(!s.loaners || s.loaners.length === 0) return '';
+  return `
+    <div class="section-label">Loaner Ships</div>
+    <div class="similar-list">
+      ${s.loaners.map(l=>{
+        const match = l.slug ? SHIPS.find(x=>x.slug===l.slug) : SHIPS.find(x=>x.name===l.name);
+        const esc = String(l.name).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+        return `<div class="similar-row"${match?` data-similar-id="${match.id}"`:''}>
+          <div class="sim-thumb">${match && match.thumb ? `<img src="${match.thumb}" alt="">` : '↺'}</div>
+          <div>
+            <div class="sim-name">${esc}</div>
+            <div class="sim-meta">${match ? match.manufacturer : 'Loaner'}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="tool-note" style="padding-top:8px;">
+      Loaners are temporary ships CIG grants while this pledge isn't flyable. Confirm against RSI's
+      official loaner matrix before relying on it.
+    </div>`;
+}
+
+/* ---------- Detail view ---------- */
+function openDetail(id){
+  const s = SHIPS.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('d-idtag').textContent = (s.slug || s.name).toUpperCase();
+  document.getElementById('d-body').innerHTML = `
+    <div class="hero">
+      <div class="hero-frame">
+        ${s.image ? `<img src="${s.image}" alt="${s.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : ''}
+        <div class="fallback" style="${s.image?'display:none;':'display:flex;'} align-items:center; justify-content:center; height:100%; width:100%;">
+          [ NO IMAGE AVAILABLE ]<br>${s.name.toUpperCase()}
+        </div>
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div class="scan"></div>
+      </div>
+      ${s.imageBorrowed ? '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--muted);margin-top:6px;">[ IMAGE FROM BASE VARIANT — no unique photo on file ]</div>' : ''}
+    </div>
+
+    <div class="title-block">
+      <div class="manu-line">${s.manufacturer}</div>
+      <h2>${s.name}</h2>
+      <div class="badges">
+        <span class="badge status-${s.status}">${s.status.replace(/-/g,' ')}</span>
+        <span class="badge">${s.role}</span>
+      </div>
+    </div>
+
+    <div class="desc-text">${s.focus}</div>
+
+    <div class="detail-flow">
+
+    ${(()=>{ const dc = dataCompleteness(s); return dc.sparse ? `
+      <div class="notice" style="margin:14px 16px 0; padding:10px 12px; background:rgba(240,168,64,0.08); border:1px solid rgba(240,168,64,0.3); font-family:'Share Tech Mono',monospace; font-size:10.5px; color:var(--amber); line-height:1.6;">
+        LIMITED DATA — only ${dc.present}/${dc.total} core specs available upstream.<br>
+        Capital ships and unreleased concepts often have incomplete records in the source dataset. Dashes below mean "not published", not an error.
+      </div>` : ''; })()}
+
+    <div class="stat-grid">
+      <div class="stat"><div class="k">Crew</div><div class="v">${s.crewMin==null?'—':(s.crewMin===s.crewMax? s.crewMin : s.crewMin+'–'+s.crewMax)}</div></div>
+      <div class="stat"><div class="k">Cargo</div><div class="v">${fmt(s.cargoSCU)} <small>SCU</small></div></div>
+      <div class="stat"><div class="k">SCM Speed</div><div class="v">${s.scmSpeed?fmt(s.scmSpeed):'—'} <small>m/s</small></div></div>
+      <div class="stat"><div class="k">Max Speed</div><div class="v">${s.maxSpeed?fmt(s.maxSpeed):'—'} <small>m/s</small></div></div>
+      <div class="stat"><div class="k">Length</div><div class="v">${s.length??'—'} <small>m</small></div></div>
+      <div class="stat"><div class="k">Beam / Height</div><div class="v">${s.beam??'—'} <small>/ ${s.height??'—'} m</small></div></div>
+      <div class="stat"><div class="k">Hull HP</div><div class="v">${s.health?fmt(s.health):'—'}</div></div>
+      <div class="stat"><div class="k">Shield HP</div><div class="v">${s.shieldHP?fmt(s.shieldHP):'—'}</div></div>
+      <div class="stat wide"><div class="k">Mass</div><div class="v">${s.mass?fmt(s.mass):'—'} <small>kg</small></div></div>
+    </div>
+
+    ${s.weapons && s.weapons.length ? `
+      <div class="section-label">Loadout</div>
+      <div class="weapon-list">
+        ${s.weapons.map(w=>`<div class="weapon-row"><span>${w}</span></div>`).join('')}
+      </div>` : ''}
+
+    <div class="section-label">Pledge Price</div>
+    <div class="price-panel">
+      <div><div class="pk">Standalone (base)</div><div class="pv">${formatPrice(s)}</div></div>
+      <div style="text-align:right;"><div class="pk">Status</div><div class="pk" style="color:var(--text);text-transform:capitalize;">${s.status.replace(/-/g,' ')}</div></div>
+    </div>
+
+    ${activeCurrency !== 'USD' && activeCurrency !== 'UEC' && s.priceUSD != null ? `<div style="padding:6px 16px 0; font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); line-height:1.5;">Approx. conversion from $${s.priceUSD} USD — not a live FX rate. RSI checkout price will differ.</div>` : ''}
+
+    ${renderLoaners(s)}
+
+    ${renderHardpoints(s)}
+
+    ${renderFlightPerformance(s)}
+
+    ${renderInGamePurchase(s)}
+
+    ${renderSimilarShips(s)}
+
+    <div class="cta-row">
+      <button class="cta hangar ${hangarIds.has(s.id)?'active':''}" id="detail-hangar-btn">${hangarIds.has(s.id)?'★ IN HANGAR':'☆ ADD TO HANGAR'}</button>
+      <button class="cta ${compareIds.has(s.id)?'primary':''}" id="detail-compare-btn">${compareIds.has(s.id)?'✓ COMPARING':'+ COMPARE'}</button>
+      <button class="cta" id="detail-share-btn">🔗 SHARE</button>
+    </div>
+    <div class="cta-row">
+      ${s.pledgeUrl ? `<a class="cta primary" href="${s.pledgeUrl}" target="_blank" rel="noopener">RSI PAGE</a>` : ''}
+      ${s.wikiUrl ? `<a class="cta" href="${s.wikiUrl}" target="_blank" rel="noopener">WIKI ENTRY</a>` : ''}
+    </div>
+
+    </div>
+
+    <div class="footnote">
+      Live data from the community-run star-citizen.wiki API. Fan-made reference tool — not affiliated with or
+      endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen®, Roberts Space Industries® and
+      all associated logos and designs are property of Cloud Imperium Rights LLC.
+    </div>
+  `;
+  document.getElementById('detail-hangar-btn').addEventListener('click', ()=>{
+    toggleHangar(s.id);
+    openDetail(s.id); // re-render detail view to reflect new state
+  });
+  document.getElementById('detail-compare-btn').addEventListener('click', ()=>{
+    toggleCompare(s.id);
+    openDetail(s.id);
+  });
+  document.querySelectorAll('.similar-row').forEach(row=>row.addEventListener('click', ()=>{
+    openDetail(row.dataset.similarId);
+  }));
+  const shareBtn = document.getElementById('detail-share-btn');
+  if(shareBtn) shareBtn.addEventListener('click', async ()=>{
+    const url = window.location.origin + window.location.pathname + '#' + shipHashFor(s);
+    // Native share sheet on mobile, clipboard everywhere else.
+    if(navigator.share){
+      try{ await navigator.share({ title: s.name + ' — VERSEDEX', url }); return; }
+      catch(err){ if(err && err.name === 'AbortError') return; }
+    }
+    try{
+      await navigator.clipboard.writeText(url);
+      setStatus('LINK COPIED TO CLIPBOARD', 'ok');
+    }catch(err){
+      setStatus('COPY BLOCKED — LINK IS IN THE ADDRESS BAR', 'error');
+    }
+    setTimeout(()=>{ const el=document.getElementById('status-banner'); if(el) el.style.display='none'; }, 3000);
+  });
+
+  document.getElementById('detail').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setHash(shipHashFor(s));
+}
+
+function anyOverlayOpen(){
+  return document.getElementById('detail').classList.contains('open')
+      || document.getElementById('compare-view').classList.contains('open')
+      || document.getElementById('tools-view').classList.contains('open')
+      || document.getElementById('home-view').classList.contains('open');
+}
+
+function syncBodyScroll(){
+  document.body.style.overflow = anyOverlayOpen() ? 'hidden' : '';
+}
+
+function closeDetail(){
+  document.getElementById('detail').classList.remove('open');
+  syncBodyScroll();
+  setHash(viewingHangar ? 'hangar' : '');
+}
+
+/* ---------- Tools: efficiency, ROI, fleet ---------- */
+let activeTool = 'efficiency';
+let roiState = { shipId:null, profitPerSCU:200, minutesPerRun:25, loadScu:null, currency:'aUEC' };
+
+function openToolsView(){
+  renderTools();
+  document.getElementById('tools-view').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setHash('tools=' + activeTool);
+}
+function closeToolsView(){
+  document.getElementById('tools-view').classList.remove('open');
+  syncBodyScroll();
+  setHash(viewingHangar ? 'hangar' : '');
+  if(typeof setActiveNav === 'function') setActiveNav(viewingHangar ? 'hangar' : 'ships');
+}
+
+function renderTools(){
+  document.querySelectorAll('.tool-tab').forEach(t=>t.classList.toggle('active', t.dataset.tool===activeTool));
+  if(activeTool === 'efficiency') renderEfficiencyTool();
+  else if(activeTool === 'roi') renderRoiTool();
+  else if(activeTool === 'budget') renderBudgetTool();
+  else if(activeTool === 'routes') renderRoutesTool();
+  else renderFleetTool();
+}
+
+/* ---- Cargo efficiency: SCU per unit cost ---- */
+let effState = { metric:'usd', role:'ALL', minScu:0 };
+
+function renderEfficiencyTool(){
+  const cargoShips = SHIPS.filter(s => (s.cargoSCU||0) > 0);
+
+  // Roles that actually have cargo ships, so the filter never shows dead options
+  const roles = ['ALL', ...new Set(cargoShips.map(s=>s.role).filter(Boolean))].sort((a,b)=>
+    a==='ALL' ? -1 : b==='ALL' ? 1 : a.localeCompare(b));
+
+  const pool = cargoShips.filter(s =>
+    (effState.role === 'ALL' || s.role === effState.role) &&
+    (s.cargoSCU || 0) >= effState.minScu
+  );
+
+  const usingUsd = effState.metric === 'usd';
+  const ranked = pool
+    .filter(s => usingUsd ? (s.priceUSD != null && s.priceUSD > 0)
+                          : (s.uecPrice != null && s.uecPrice > 0))
+    .map(s => ({
+      s,
+      value: usingUsd ? s.cargoSCU / s.priceUSD
+                      : s.cargoSCU / s.uecPrice * 1000000,
+      cost: usingUsd ? `$${s.priceUSD}` : `${(s.uecPrice/1000000).toFixed(2)}M aUEC`
+    }))
+    .sort((a,b)=> b.value - a.value);
+
+  const top = ranked.slice(0, 30);
+  const best = top[0];
+  const worst = ranked[ranked.length - 1];
+
+  document.getElementById('tools-body').innerHTML = `
+    <div class="explainer">
+      <div class="ex-title">What this shows</div>
+      <div class="ex-body">
+        How much cargo space each ship gives you <strong>per unit of cost</strong>. A higher score means
+        better value for hauling — you're paying less for every SCU you can carry.
+        ${usingUsd
+          ? `<br><br><strong>SCU per $1</strong> uses the real-money pledge price. Useful when deciding what to buy with cash.`
+          : `<br><br><strong>SCU per 1M aUEC</strong> uses the in-game purchase price. Useful when deciding what to save up for.`}
+        <br><br>This only measures cargo value — it ignores speed, defences, and whether the ship is
+        pleasant to fly. A cheap hauler that dies to the first pirate isn't really efficient.
+      </div>
+    </div>
+
+    <div class="tool-field">
+      <label>Measure by</label>
+      <div class="filters" id="eff-metric">
+        <button class="chip ${usingUsd?'active':''}" data-metric="usd">SCU PER $1</button>
+        <button class="chip ${!usingUsd?'active':''}" data-metric="uec">SCU PER 1M aUEC</button>
+      </div>
+    </div>
+
+    <div class="tool-field">
+      <label>Role</label>
+      <select id="eff-role" class="adv-select">
+        ${roles.map(r=>`<option value="${esc(r)}"${r===effState.role?' selected':''}>${r==='ALL'?'All roles':esc(r)}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="tool-field">
+      <label>Minimum cargo: <span style="color:var(--cyan);">${fmt(effState.minScu)}</span> SCU</label>
+      <input type="range" id="eff-scu" min="0" max="500" step="10" value="${effState.minScu}"
+             style="width:100%; accent-color:var(--cyan);">
+    </div>
+
+    ${top.length === 0 ? `
+      <div class="tool-note">
+        No ships match those filters with ${usingUsd ? 'a pledge price' : 'an in-game price'}.
+        Try widening the role or lowering the minimum cargo.
+      </div>` : `
+      ${best ? `
+        <div class="eff-highlight">
+          <div class="ex-title" style="color:var(--amber);">Best value right now</div>
+          <div class="eh-name">${best.s.name}</div>
+          <div class="eh-detail">${fmt(best.s.cargoSCU)} SCU for ${best.cost} —
+            <strong>${usingUsd ? best.value.toFixed(2)+' SCU per $1' : best.value.toFixed(1)+' SCU per 1M aUEC'}</strong></div>
+          ${worst && worst.s.id !== best.s.id ? `<div class="eh-compare">That's ${(best.value / worst.value).toFixed(1)}× better value than the ${worst.s.name} at the bottom of this list.</div>` : ''}
+        </div>` : ''}
+
+      <div class="section-label">Ranked ${top.length}${ranked.length > 30 ? ' of ' + ranked.length : ''}</div>
+      ${top.map((e,i)=>{
+        const pct = best ? Math.max(4, Math.round(e.value / best.value * 100)) : 100;
+        return `
+        <div class="eff-row" data-eff-id="${e.s.id}" style="cursor:pointer;">
+          <div class="eff-rank">${String(i+1).padStart(2,'0')}</div>
+          <div class="sim-thumb">${e.s.thumb?`<img src="${e.s.thumb}" alt="" loading="lazy">`:esc((e.s.manufacturer||'').slice(0,2))}</div>
+          <div style="flex:1; min-width:0;">
+            <div class="eff-name">${e.s.name}</div>
+            <div class="eff-sub">${fmt(e.s.cargoSCU)} SCU · ${e.cost}</div>
+            <div class="eff-track"><div class="eff-fill" style="width:${pct}%;"></div></div>
+          </div>
+          <div class="eff-metric">${usingUsd ? e.value.toFixed(2) : e.value.toFixed(1)}<small>${usingUsd?'SCU/$':'SCU/M'}</small></div>
+        </div>`;
+      }).join('')}
+    `}
+
+    <div class="tool-note">
+      Ships with no cargo capacity, or with no price in the source data, are left out entirely.
+      Pledge prices are the base standalone cost and exclude packs, warbond discounts and CCU chains.
+      In-game prices come via UEX and shift between patches.
+    </div>
+  `;
+
+  const metric = document.getElementById('eff-metric');
+  if(metric) metric.addEventListener('click', e=>{
+    const b = e.target.closest('.chip'); if(!b) return;
+    effState.metric = b.dataset.metric; renderEfficiencyTool();
+  });
+  const role = document.getElementById('eff-role');
+  if(role) role.addEventListener('change', e=>{
+    effState.role = e.target.value; renderEfficiencyTool();
+  });
+  const scu = document.getElementById('eff-scu');
+  if(scu) scu.addEventListener('input', e=>{
+    effState.minScu = Number(e.target.value); renderEfficiencyTool();
+  });
+  document.querySelectorAll('[data-eff-id]').forEach(row=>row.addEventListener('click', ()=>{
+    openDetail(row.dataset.effId);
+  }));
+}
+
+/* ---- ROI: how long until a ship pays for itself ---- */
+function renderRoiTool(){
+  const cargoShips = SHIPS.filter(s => (s.cargoSCU||0) > 0 && s.uecPrice != null && s.uecPrice > 0)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  if(cargoShips.length === 0){
+    document.getElementById('tools-body').innerHTML =
+      `<div class="tool-note">No ships currently have both cargo capacity and an in-game aUEC price, so ROI can't be calculated.</div>`;
+    return;
+  }
+
+  if(!roiState.shipId || !cargoShips.find(s=>s.id===roiState.shipId)){
+    roiState.shipId = cargoShips[0].id;
+  }
+  const ship = cargoShips.find(s=>s.id===roiState.shipId);
+
+  // Load factor: how much cargo you actually carry per run. Defaults to full,
+  // but real missions rarely fill a hold exactly.
+  if(roiState.loadScu == null || roiState.loadScu > ship.cargoSCU){
+    roiState.loadScu = ship.cargoSCU;
+  }
+  const load = Math.max(0, Math.min(roiState.loadScu, ship.cargoSCU));
+  const loadPct = ship.cargoSCU > 0 ? Math.round(load / ship.cargoSCU * 100) : 0;
+
+  const profitPerRun = load * roiState.profitPerSCU;
+  const runsToPayOff = profitPerRun > 0 ? Math.ceil(ship.uecPrice / profitPerRun) : null;
+  const totalMinutes = runsToPayOff != null ? runsToPayOff * roiState.minutesPerRun : null;
+  const hours = totalMinutes != null ? (totalMinutes / 60) : null;
+  const profitPerHour = roiState.minutesPerRun > 0 ? (profitPerRun / roiState.minutesPerRun) * 60 : 0;
+
+  document.getElementById('tools-body').innerHTML = `
+    <div class="explainer">
+      <div class="ex-title">What this shows</div>
+      <div class="ex-body">
+        How many cargo runs you'd need to earn a ship <strong>in-game</strong>, instead of buying it with real money.
+        Set your own numbers below — profit per SCU varies hugely by commodity, and how long a run takes
+        depends on the route and how much trouble you hit.
+      </div>
+    </div>
+
+    <div class="tool-field">
+      <label>Ship</label>
+      <select id="roi-ship">
+        ${cargoShips.map(s=>`<option value="${s.id}" ${s.id===roiState.shipId?'selected':''}>${s.name} — ${fmt(s.cargoSCU)} SCU</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="tool-field">
+      <label>Cargo loaded: <span style="color:var(--cyan);">${fmt(load)}</span> / ${fmt(ship.cargoSCU)} SCU (${loadPct}%)</label>
+      <input type="range" id="roi-load" min="0" max="${ship.cargoSCU}" step="1" value="${load}" style="width:100%; accent-color:var(--cyan); padding:0;">
+      <div style="display:flex; gap:6px; margin-top:4px;">
+        <button class="chip" data-load="25">25%</button>
+        <button class="chip" data-load="50">50%</button>
+        <button class="chip" data-load="75">75%</button>
+        <button class="chip" data-load="100">FULL</button>
+      </div>
+    </div>
+
+    <div class="tool-field">
+      <label>Profit per SCU (aUEC)</label>
+      <input type="number" id="roi-profit" value="${roiState.profitPerSCU}" min="1" step="10">
+    </div>
+
+    <div class="tool-field">
+      <label>Minutes per run (buy → travel → sell)</label>
+      <input type="number" id="roi-minutes" value="${roiState.minutesPerRun}" min="1" step="5">
+    </div>
+
+    <div class="roi-result">
+      <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px;">RUNS TO PAY OFF</div>
+      <div class="roi-big">${runsToPayOff != null ? fmt(runsToPayOff) : '—'}</div>
+      <div style="margin-top:12px;">
+        <div class="roi-line"><span class="rk">Ship cost (in-game)</span><span class="rv">${fmt(ship.uecPrice)} aUEC</span></div>
+        <div class="roi-line"><span class="rk">Cargo per run</span><span class="rv">${fmt(load)} / ${fmt(ship.cargoSCU)} SCU</span></div>
+        <div class="roi-line"><span class="rk">Profit per run</span><span class="rv">${fmt(profitPerRun)} aUEC</span></div>
+        <div class="roi-line"><span class="rk">Profit per hour</span><span class="rv">${fmt(Math.round(profitPerHour))} aUEC/hr</span></div>
+        <div class="roi-line"><span class="rk">Estimated time</span><span class="rv">${hours != null ? (hours < 1 ? Math.round(totalMinutes)+' min' : hours.toFixed(1)+' hrs') : '—'}</span></div>
+      </div>
+    </div>
+
+    <div class="tool-note">
+      Estimates only. Assumes the load above every run, no losses, and a constant profit margin — real runs vary with
+      stock levels, server performance and piracy. Profit per SCU differs hugely by commodity; check a live trade
+      tool such as UEX or SC Trade Tools for current margins.
+    </div>
+  `;
+
+  document.getElementById('roi-ship').addEventListener('change', e=>{
+    roiState.shipId = e.target.value;
+    roiState.loadScu = null; // reset to full for the newly selected ship
+    renderRoiTool();
+  });
+  document.getElementById('roi-load').addEventListener('input', e=>{
+    roiState.loadScu = Number(e.target.value);
+    renderRoiTool();
+  });
+  document.querySelectorAll('[data-load]').forEach(btn=>btn.addEventListener('click', ()=>{
+    roiState.loadScu = Math.round(ship.cargoSCU * Number(btn.dataset.load) / 100);
+    renderRoiTool();
+  }));
+  document.getElementById('roi-profit').addEventListener('change', e=>{ roiState.profitPerSCU = Math.max(0, Number(e.target.value)||0); renderRoiTool(); });
+  document.getElementById('roi-minutes').addEventListener('change', e=>{ roiState.minutesPerRun = Math.max(1, Number(e.target.value)||1); renderRoiTool(); });
+}
+
+/* ---- Budget: what can I actually afford in-game right now ---- */
+let budgetState = { balance: 1000000, mode: 'buy' };
+
+function renderBudgetTool(){
+  const bal = budgetState.balance;
+  const mode = budgetState.mode;
+
+  let candidates;
+  if(mode === 'buy'){
+    candidates = SHIPS.filter(s => s.uecPrice != null && s.uecPrice > 0 && s.uecPrice <= bal)
+      .map(s => ({ s, cost: s.uecPrice }));
+  }else{
+    candidates = SHIPS
+      .filter(s => (s.uecRentals||[]).some(r=>r.price > 0))
+      .map(s => ({ s, cost: Math.min(...s.uecRentals.filter(r=>r.price>0).map(r=>r.price)) }))
+      .filter(e => e.cost <= bal);
+  }
+
+  candidates.sort((a,b)=> b.cost - a.cost);   // best you can afford first
+  const affordable = candidates.slice(0, 40);
+
+  const cheapestOverall = SHIPS
+    .filter(s => s.uecPrice != null && s.uecPrice > 0)
+    .sort((a,b)=>a.uecPrice - b.uecPrice)[0];
+
+  document.getElementById('tools-body').innerHTML = `
+    <div class="explainer">
+      <div class="ex-title">What this shows</div>
+      <div class="ex-body">
+        Every ship you could <strong>buy or rent in-game right now</strong> at your current balance,
+        most expensive first — so the top of the list is the best thing within reach.
+        Ships only sold in the pledge store aren't included.
+      </div>
+    </div>
+
+    <div class="tool-field">
+      <label>Your balance (aUEC)</label>
+      <input type="number" id="budget-input" value="${bal}" min="0" step="50000">
+    </div>
+
+    <div class="tool-field">
+      <label>Mode</label>
+      <div class="filters" id="budget-mode">
+        <button class="chip ${mode==='buy'?'active':''}" data-mode="buy">BUY OUTRIGHT</button>
+        <button class="chip ${mode==='rent'?'active':''}" data-mode="rent">RENT PER DAY</button>
+      </div>
+    </div>
+
+    ${affordable.length === 0 ? `
+      <div class="tool-note">
+        Nothing ${mode==='rent'?'rentable':'purchasable'} at that balance.
+        ${cheapestOverall && mode==='buy' ? `The cheapest ship in-game is the <strong style="color:var(--cyan);">${cheapestOverall.name}</strong> at ${fmt(cheapestOverall.uecPrice)} aUEC — ${fmt(cheapestOverall.uecPrice - bal)} aUEC to go.` : ''}
+      </div>` : `
+      <div class="section-label">${affordable.length} within budget${candidates.length > 40 ? ' (top 40)' : ''}</div>
+      ${affordable.map(e=>`
+        <div class="eff-row" data-budget-id="${e.s.id}" style="cursor:pointer;">
+          <div class="sim-thumb" style="width:36px;height:36px;flex-shrink:0;">${e.s.thumb?`<img src="${e.s.thumb}" alt="">`:(e.s.manufacturer||'').slice(0,2)}</div>
+          <div style="flex:1; min-width:0;">
+            <div class="eff-name">${e.s.name}</div>
+            <div class="eff-sub">${e.s.manufacturer}${e.s.cargoSCU?` · ${fmt(e.s.cargoSCU)} SCU`:''}${e.s.seats?` · ${e.s.seats} seat${e.s.seats===1?'':'s'}`:''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="eff-metric">${fmt(e.cost)}<small>${mode==='rent'?'/day':''}</small></div>
+            ${mode==='buy'?`<div class="eff-sub" style="color:#7ce89a;">${fmt(bal - e.cost)} left</div>`:''}
+          </div>
+        </div>`).join('')}
+    `}
+
+    <div class="tool-note">
+      Based on in-game aUEC prices via UEX, which vary by terminal and can change between patches.
+      Ships not sold in-game are excluded. Pledge-store cost isn't considered here.
+    </div>
+  `;
+
+  const input = document.getElementById('budget-input');
+  if(input) input.addEventListener('change', e=>{
+    budgetState.balance = Math.max(0, Number(e.target.value) || 0);
+    renderBudgetTool();
+  });
+  const modeWrap = document.getElementById('budget-mode');
+  if(modeWrap) modeWrap.addEventListener('click', e=>{
+    const btn = e.target.closest('.chip');
+    if(!btn) return;
+    budgetState.mode = btn.dataset.mode;
+    renderBudgetTool();
+  });
+  document.querySelectorAll('[data-budget-id]').forEach(row=>row.addEventListener('click', ()=>{
+    openDetail(row.dataset.budgetId);
+  }));
+}
+
+/* ---- Trade routes: live top routes from UEX, matched against your hangar ----
+   NOTE: the UEX /data_extract endpoint is documented as returning "plain text".
+   Its exact shape is unverified, so parsing is deliberately defensive and
+   failure is surfaced to the user rather than silently swallowed. */
+const UEX_ROUTES_URL = 'https://uexcorp.space/api/2.0/data_extract?data=commodities_routes';
+let routesCache = null;
+let routesError = null;
+let routesLoading = false;
+
+function parseRoutesPayload(raw){
+  // Try JSON first (either {data:[...]} or a bare array)
+  let parsedJson = null;
+  try{
+    parsedJson = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }catch(err){ /* not JSON - fall through to text */ }
+
+  if(parsedJson !== null && typeof parsedJson === 'object'){
+    const arr = Array.isArray(parsedJson) ? parsedJson
+              : (Array.isArray(parsedJson.data) ? parsedJson.data : null);
+    if(arr){
+      // Valid JSON but no rows: report empty rather than dumping "[]" as text.
+      return arr.length ? { kind:'json', rows:arr } : null;
+    }
+    if(typeof parsedJson.data === 'string' && parsedJson.data.trim()){
+      return { kind:'text', text:parsedJson.data };
+    }
+    return null;
+  }
+
+  if(typeof raw === 'string' && raw.trim().length){
+    return { kind:'text', text:raw };
+  }
+  return null;
+}
+
+async function loadRoutes(){
+  if(routesLoading) return;
+  routesLoading = true; routesError = null;
+  renderRoutesTool();
+  try{
+    const res = await fetchWithTimeout(UEX_ROUTES_URL, FETCH_TIMEOUT_MS);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.text();
+    const parsed = parseRoutesPayload(raw);
+    if(!parsed) throw new Error('Empty or unrecognised response');
+    routesCache = parsed;
+  }catch(err){
+    routesError = err.message;
+  }
+  routesLoading = false;
+  renderRoutesTool();
+}
+
+/* Parse UEX's bullet-separated feed.
+   Real observed shape (one single line, no newlines):
+     "UEX • Best Commodities Routes • Updated Sep 4 • 2956 •
+      WAST: Nyx Gateway (Stanton) ▶ Everus Harbor = Up to 55M UEC •
+      ... • All values are estimated"
+   Each route segment is:  CODE: Origin ▶ Destination = Up to <value> */
+function parseUexRoutes(text){
+  const segments = String(text).split(/\s*[•·]\s*/).map(x=>x.trim()).filter(Boolean);
+  const routes = [];
+  const meta = [];
+
+  segments.forEach(seg=>{
+    // A route must contain the ▶ arrow (or a fallback -> / →)
+    const arrowMatch = seg.match(/^(?:([A-Za-z0-9]+)\s*:\s*)?(.+?)\s*(?:▶|→|->)\s*(.+?)\s*=\s*(.+)$/);
+    if(arrowMatch){
+      routes.push({
+        code: arrowMatch[1] || null,
+        origin: arrowMatch[2].trim(),
+        destination: arrowMatch[3].trim(),
+        value: arrowMatch[4].trim()
+      });
+    }else{
+      meta.push(seg);
+    }
+  });
+
+  // Pull a title/date out of the leading non-route segments if present
+  const title = meta.find(m=>/updated/i.test(m)) || null;
+  return { routes, meta, title };
+}
+
+/* Sort helper: turn "Up to 55M UEC" into a number for ranking. */
+function routeValueNumber(v){
+  const m = String(v).match(/([\d.]+)\s*([KMB])?/i);
+  if(!m) return 0;
+  let n = parseFloat(m[1]) || 0;
+  const unit = (m[2]||'').toUpperCase();
+  if(unit === 'K') n *= 1e3;
+  else if(unit === 'M') n *= 1e6;
+  else if(unit === 'B') n *= 1e9;
+  return n;
+}
+
+function renderRoutesTool(){
+  const body = document.getElementById('tools-body');
+  const haulers = SHIPS.filter(s => (s.cargoSCU||0) > 0);
+  const owned = [...hangarIds].map(id => SHIPS.find(s=>s.id===id)).filter(Boolean)
+    .filter(s => (s.cargoSCU||0) > 0)
+    .sort((a,b)=> (b.cargoSCU||0) - (a.cargoSCU||0));
+
+  const hangarBlock = owned.length
+    ? `<div class="section-label">Your haulers (${owned.length})</div>
+       ${owned.slice(0,8).map(s=>`
+         <div class="eff-row">
+           <div style="flex:1; min-width:0;">
+             <div class="eff-name">${s.name}</div>
+             <div class="eff-sub">${s.manufacturer}</div>
+           </div>
+           <div class="eff-metric">${fmt(s.cargoSCU)}<small>SCU</small></div>
+         </div>`).join('')}
+       <div class="tool-note">Match a route's SCU requirement against these capacities to pick the right ship.</div>`
+    : `<div class="tool-note">Add cargo ships to your hangar (☆) and they'll be listed here for quick capacity matching.</div>`;
+
+  let routesBlock;
+  if(routesLoading){
+    routesBlock = `<div class="tool-note" style="color:var(--cyan);">FETCHING LIVE ROUTES FROM UEX…</div>`;
+  }else if(routesError){
+    routesBlock = `
+      <div class="notice" style="margin:14px 16px; padding:10px 12px; background:rgba(240,168,64,0.08); border:1px solid rgba(240,168,64,0.3); font-family:'Share Tech Mono',monospace; font-size:10.5px; color:var(--amber); line-height:1.6;">
+        COULD NOT LOAD LIVE ROUTES (${routesError}).<br>
+        This may be a CORS restriction — UEX may not permit direct browser requests.
+        Route data is still available at uexcorp.space and sc-trade.tools.
+      </div>
+      <div style="padding:0 16px;"><button id="routes-retry" class="cta">RETRY</button></div>`;
+  }else if(routesCache && routesCache.kind === 'json'){
+    const rows = routesCache.rows.slice(0, 20);
+    routesBlock = `<div class="section-label">Top routes (live via UEX)</div>` + rows.map((r,i)=>{
+      const origin = r.origin_terminal_name || r.origin || r.terminal_origin_name || '—';
+      const dest   = r.destination_terminal_name || r.destination || r.terminal_destination_name || '—';
+      const commod = r.commodity_name || r.commodity || '—';
+      const margin = r.price_margin ?? r.profit ?? r.margin ?? null;
+      const scu    = r.scu ?? r.investment_scu ?? null;
+      return `<div class="eff-row">
+        <div class="eff-rank">${String(i+1).padStart(2,'0')}</div>
+        <div style="flex:1; min-width:0;">
+          <div class="eff-name">${commod}</div>
+          <div class="eff-sub">${origin} → ${dest}${scu?` · ${fmt(scu)} SCU`:''}</div>
+        </div>
+        ${margin!=null?`<div class="eff-metric">${fmt(margin)}<small>aUEC</small></div>`:''}
+      </div>`;
+    }).join('');
+  }else if(routesCache && routesCache.kind === 'text'){
+    const parsed = parseUexRoutes(routesCache.text);
+    const esc = str => String(str).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+    if(parsed.routes.length){
+      const sorted = [...parsed.routes].sort((a,b)=> routeValueNumber(b.value) - routeValueNumber(a.value));
+      routesBlock = `
+        <div class="section-label">Top routes (live via UEX)</div>
+        ${parsed.title ? `<div class="tool-note" style="padding-top:0;">${esc(parsed.title)} · ${sorted.length} routes</div>` : ''}
+        ${sorted.map((r,i)=>`
+          <div class="eff-row">
+            <div class="eff-rank">${String(i+1).padStart(2,'0')}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="eff-name">${r.code ? esc(r.code) + ' ' : ''}<span style="color:var(--muted); font-weight:600; font-size:12px;">${esc(r.origin)}</span></div>
+              <div class="eff-sub">▶ ${esc(r.destination)}</div>
+            </div>
+            <div class="eff-metric" style="font-size:13px;">${esc(r.value.replace(/^Up to\s*/i,''))}</div>
+          </div>`).join('')}
+        <div class="tool-note">
+          Commodity codes are UEX abbreviations (e.g. WAST, TITA, RMC, HELI). Values are the maximum
+          estimated return for a full run, not profit per SCU — check UEX directly for margins and
+          current stock.
+        </div>`;
+    }else{
+      // Parser found no routes: show the raw feed rather than silently failing.
+      routesBlock = `
+        <div class="section-label">Top routes (live via UEX)</div>
+        <div class="tool-note" style="padding-top:0;">VERSEDEX couldn't parse this feed into routes — showing it as received.</div>
+        <div style="margin:0 16px; padding:12px; background:var(--panel); border:1px solid var(--line);
+                    font-family:'Share Tech Mono',monospace; font-size:10.5px; color:var(--muted);
+                    white-space:pre-wrap; word-break:break-word; line-height:1.6; max-height:300px; overflow-y:auto;">${
+          esc(routesCache.text.slice(0, 3000))
+        }</div>`;
+    }
+  }else{
+    routesBlock = `<div style="padding:14px 16px;"><button id="routes-load" class="cta primary">LOAD LIVE ROUTES</button></div>`;
+  }
+
+  body.innerHTML = `
+    <div class="tool-intro">
+      Live top trade routes from UEX, alongside your own cargo ships so you can match a run to a hull.
+    </div>
+    ${routesBlock}
+    ${hangarBlock}
+    <div class="tool-note">
+      Route data is crowdsourced by UEX Datarunners and may not reflect live servers. Always confirm prices
+      in-game before committing to a run. VERSEDEX is not affiliated with UEX.
+    </div>
+  `;
+
+  const loadBtn = document.getElementById('routes-load');
+  if(loadBtn) loadBtn.addEventListener('click', loadRoutes);
+  const retryBtn = document.getElementById('routes-retry');
+  if(retryBtn) retryBtn.addEventListener('click', loadRoutes);
+}
+
+/* ---- Hangar import: paste a ship list from anywhere ---- */
+function normaliseShipName(str){
+  return String(str).toLowerCase()
+    .replace(/[''`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/* Pull candidate ship names out of pasted text. Handles CSV, TSV, one-per-line,
+   quantity prefixes ("2x Freelancer"), and common export column layouts. */
+function extractShipNames(raw){
+  const lines = String(raw).split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const names = [];
+  lines.forEach(line=>{
+    // Split CSV/TSV rows; otherwise treat the whole line as one name
+    let cells = line.includes('\t') ? line.split('\t')
+              : (line.match(/,/g)||[]).length >= 1 ? line.split(',')
+              : [line];
+    cells = cells.map(c=>c.replace(/^["']|["']$/g,'').trim()).filter(Boolean);
+    cells.forEach(c=>{
+      // Strip leading quantities like "2x " or "3 x "
+      const cleaned = c.replace(/^\d+\s*[x×]\s*/i, '').trim();
+      if(cleaned && cleaned.length > 1 && !/^(name|ship|vehicle|qty|quantity|manufacturer)$/i.test(cleaned)){
+        names.push(cleaned);
+      }
+    });
+  });
+  return names;
+}
+
+function matchShipsByName(names){
+  const matched = [], unmatched = [];
+  const index = SHIPS.map(s=>({ s, key: normaliseShipName(s.name) }));
+
+  names.forEach(raw=>{
+    const key = normaliseShipName(raw);
+    if(!key) return;
+    // exact, then startsWith, then contains - first match wins
+    let hit = index.find(e=>e.key === key)
+           || index.find(e=>e.key.startsWith(key) || key.startsWith(e.key))
+           || index.find(e=>e.key.includes(key) || key.includes(e.key));
+    if(hit && !matched.find(m=>m.id===hit.s.id)) matched.push(hit.s);
+    else if(!hit) unmatched.push(raw);
+  });
+  return { matched, unmatched };
+}
+
+let importPreview = null;
+
+function renderImportSection(){
+  if(!importPreview){
+    return `
+      <div class="section-label">Import Hangar</div>
+      <div class="tool-intro" style="padding-top:0;">
+        Paste a list of your ships — one per line, or CSV from a spreadsheet. Names are matched
+        against the registry automatically.
+      </div>
+      <div class="tool-field">
+        <textarea id="import-text" rows="5" placeholder="Freelancer&#10;Avenger Titan&#10;2x Cutlass Black"
+          style="background:var(--panel); border:1px solid var(--line); color:var(--text);
+                 font-family:'Rajdhani',sans-serif; font-size:15px; padding:10px; width:100%; resize:vertical;"></textarea>
+      </div>
+      <div style="padding:10px 16px 0; display:flex; gap:8px;">
+        <button id="import-preview-btn" class="cta primary" style="flex:1;">PREVIEW MATCH</button>
+      </div>
+      <div class="tool-note">
+        RSI has no public API, so there's no automatic sync — this is a manual paste. Nothing leaves your device.
+      </div>`;
+  }
+
+  const { matched, unmatched } = importPreview;
+  return `
+    <div class="section-label">Import Preview</div>
+    <div class="tool-intro" style="padding-top:0;">
+      Matched <strong style="color:var(--cyan);">${matched.length}</strong> ship${matched.length===1?'':'s'}${unmatched.length?`, <strong style="color:var(--amber);">${unmatched.length}</strong> not recognised`:''}.
+    </div>
+    ${matched.map(s=>`
+      <div class="eff-row">
+        <div style="flex:1; min-width:0;">
+          <div class="eff-name">${s.name}</div>
+          <div class="eff-sub">${s.manufacturer}${s.cargoSCU?` · ${fmt(s.cargoSCU)} SCU`:''}</div>
+        </div>
+        <div class="eff-metric" style="color:#7ce89a; font-size:13px;">✓</div>
+      </div>`).join('')}
+    ${unmatched.length?`
+      <div class="section-label">Not Recognised</div>
+      ${unmatched.map(u=>`
+        <div class="eff-row">
+          <div style="flex:1; min-width:0; font-size:12.5px; color:var(--muted);">${String(u).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
+          <div class="eff-metric" style="color:var(--amber); font-size:13px;">?</div>
+        </div>`).join('')}
+      <div class="tool-note">Unrecognised entries may be typos, ground vehicles named differently, or ships not in the source dataset.</div>
+    `:''}
+    <div style="padding:10px 16px 0; display:flex; gap:8px;">
+      <button id="import-confirm-btn" class="cta primary" style="flex:1;" ${matched.length?'':'disabled'}>ADD ${matched.length} TO HANGAR</button>
+      <button id="import-cancel-btn" class="cta" style="flex:0 0 90px;">CANCEL</button>
+    </div>`;
+}
+
+function wireImportSection(){
+  const prev = document.getElementById('import-preview-btn');
+  if(prev) prev.addEventListener('click', ()=>{
+    const ta = document.getElementById('import-text');
+    const text = ta ? ta.value : '';
+    if(!text.trim()){
+      setStatus('PASTE A SHIP LIST FIRST', 'error');
+      setTimeout(()=>{ document.getElementById('status-banner').style.display='none'; }, 2200);
+      return;
+    }
+    importPreview = matchShipsByName(extractShipNames(text));
+    renderFleetTool();
+  });
+
+  const conf = document.getElementById('import-confirm-btn');
+  if(conf) conf.addEventListener('click', ()=>{
+    if(!importPreview) return;
+    importPreview.matched.forEach(s=>hangarIds.add(s.id));
+    saveHangar();
+    updateHangarCount();
+    const n = importPreview.matched.length;
+    importPreview = null;
+    renderList();
+    renderFleetTool();
+    setStatus(`ADDED ${n} SHIP${n===1?'':'S'} TO HANGAR`, 'ok');
+    setTimeout(()=>{ document.getElementById('status-banner').style.display='none'; }, 2500);
+  });
+
+  const canc = document.getElementById('import-cancel-btn');
+  if(canc) canc.addEventListener('click', ()=>{ importPreview = null; renderFleetTool(); });
+}
+
+/* ---- Fleet: totals for ships in the user's hangar ---- */
+function renderFleetTool(){
+  const owned = [...hangarIds].map(id => SHIPS.find(s=>s.id===id)).filter(Boolean);
+
+  if(owned.length === 0){
+    document.getElementById('tools-body').innerHTML = `
+      <div class="tool-intro">Add ships to your hangar (☆ on any ship) to see fleet totals here.</div>
+      ${renderImportSection()}`;
+    wireImportSection();
+    return;
+  }
+
+  const totalUsd = owned.reduce((a,s)=> a + (s.priceUSD||0), 0);
+  const totalScu = owned.reduce((a,s)=> a + (s.cargoSCU||0), 0);
+  const totalSeats = owned.reduce((a,s)=> a + (s.seats||0), 0);
+  const withMedbed = owned.filter(s=>s.hasMedbed).length;
+  const withBed = owned.filter(s=>s.hasBed).length;
+  const buyable = owned.filter(s=>s.uecLocations && s.uecLocations.length).length;
+  const biggest = owned.reduce((a,s)=> (s.cargoSCU||0) > (a?.cargoSCU||0) ? s : a, owned[0]);
+  const unpriced = owned.filter(s=>s.priceUSD==null).length;
+
+  document.getElementById('tools-body').innerHTML = `
+    <div class="tool-intro">Totals across the ${owned.length} ship${owned.length===1?'':'s'} in your hangar.</div>
+
+    <div class="roi-result" style="border-color:var(--amber);">
+      <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px;">TOTAL FLEET VALUE</div>
+      <div class="roi-big" style="color:var(--amber);">${formatTotal(totalUsd)}</div>
+      <div style="margin-top:12px;">
+        <div class="roi-line"><span class="rk">Ships owned</span><span class="rv">${owned.length}</span></div>
+        <div class="roi-line"><span class="rk">Total cargo</span><span class="rv">${fmt(totalScu)} SCU</span></div>
+        <div class="roi-line"><span class="rk">Total seats</span><span class="rv">${fmt(totalSeats)}</span></div>
+        <div class="roi-line"><span class="rk">Largest hauler</span><span class="rv">${biggest ? biggest.name : '—'}</span></div>
+        <div class="roi-line"><span class="rk">With medbed</span><span class="rv">${withMedbed}</span></div>
+        <div class="roi-line"><span class="rk">With bed (logout)</span><span class="rv">${withBed}</span></div>
+        <div class="roi-line"><span class="rk">Buyable in-game</span><span class="rv">${buyable}</span></div>
+      </div>
+    </div>
+
+    ${unpriced > 0 ? `<div class="tool-note">${unpriced} ship${unpriced===1?'':'s'} in your hangar ${unpriced===1?'has':'have'} no pledge price in the source data, so ${unpriced===1?'it is':'they are'} excluded from the fleet value total.</div>` : ''}
+    ${renderImportSection()}
+  `;
+  wireImportSection();
+}
+
+/* ---------- Compare view ---------- */
+function openCompareView(){
+  renderCompareGrid();
+  renderCompareRadar();
+  document.getElementById('compare-view').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateCompareBar();
+}
+
+function closeCompareView(){
+  document.getElementById('compare-view').classList.remove('open');
+  syncBodyScroll();
+  updateCompareBar();
+}
+
+function renderCompareRadar(){
+  const wrap = document.getElementById('cmp-radar');
+  const ships = [...compareIds].map(id => SHIPS.find(s=>s.id===id)).filter(Boolean);
+  if(ships.length === 0){ wrap.innerHTML = ''; return; }
+
+  const axes = [
+    { label:'SCM',    get:s=>s.scmSpeed||0 },
+    { label:'PITCH',  get:s=>s.pitch||0 },
+    { label:'ROLL',   get:s=>s.roll||0 },
+    { label:'ACCEL',  get:s=>s.accelMain||0 },
+    { label:'HULL',   get:s=>s.health||0 },
+    { label:'SHIELD', get:s=>s.shieldHP||0 },
+    { label:'CARGO',  get:s=>s.cargoSCU||0 },
+  ];
+  const N = axes.length;
+  const maxes = axes.map(ax => Math.max(1, ...ships.map(s=>ax.get(s))));
+  const cx=150, cy=150, R=100;
+  const colors = ['#4fd8e8','#f0a840','#e85a9a','#7ce89a'];
+
+  function pt(i, frac){
+    const angle = -Math.PI/2 + i*(2*Math.PI/N);
+    return [cx + R*frac*Math.cos(angle), cy + R*frac*Math.sin(angle)];
+  }
+
+  let rings = '';
+  [0.25,0.5,0.75,1].forEach(frac=>{
+    const pts = axes.map((_,i)=>pt(i,frac).join(',')).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="#22303c" stroke-width="1"/>`;
+  });
+
+  let axesLines = '', labels = '';
+  axes.forEach((ax,i)=>{
+    const [x,y] = pt(i,1);
+    axesLines += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#22303c" stroke-width="1"/>`;
+    const [lx,ly] = pt(i,1.16);
+    labels += `<text x="${lx}" y="${ly}" fill="#728192" font-size="9" font-family="Share Tech Mono, monospace" text-anchor="middle" dominant-baseline="middle">${ax.label}</text>`;
+  });
+
+  let shapes = '';
+  ships.forEach((s,si)=>{
+    const color = colors[si % colors.length];
+    const pts = axes.map((ax,i)=>{
+      const frac = Math.max(0, Math.min(1, ax.get(s) / maxes[i]));
+      return pt(i,frac).join(',');
+    }).join(' ');
+    shapes += `<polygon points="${pts}" fill="${color}" fill-opacity="0.15" stroke="${color}" stroke-width="2"/>`;
+  });
+
+  const legend = ships.map((s,si)=>`
+    <div style="display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);">
+      <span style="width:10px;height:10px;background:${colors[si%colors.length]};display:inline-block;"></span>${s.name}
+    </div>`).join('');
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 300 300" style="width:100%;max-width:320px;display:block;margin:0 auto;">
+      ${rings}${axesLines}${shapes}${labels}
+    </svg>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;">${legend}</div>
+  `;
+}
+
+function renderCompareGrid(){
+  const grid = document.getElementById('cmp-grid');
+  const ships = [...compareIds].map(id => SHIPS.find(s=>s.id===id)).filter(Boolean);
+
+  if(ships.length === 0){
+    grid.innerHTML = `<div class="empty-state">NOTHING TO COMPARE<br>Go back and tap + on up to ${MAX_COMPARE} ships</div>`;
+    return;
+  }
+
+  grid.style.gridTemplateColumns = `96px repeat(${ships.length}, 136px)`;
+
+  const rows = [
+    { label:'Ship',        render:s=>`
+      <div class="cmp-thumb">${s.thumb ? `<img src="${s.thumb}" alt="">` : (s.manufacturer||'').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div class="cmp-shipname">${s.name}</div>
+      <button class="cmp-remove" data-remove-id="${s.id}">✕ REMOVE</button>` },
+    { label:'Manufacturer', render:s=>`<span class="cmp-value">${s.manufacturer}</span>` },
+    { label:'Role',         render:s=>`<span class="cmp-value">${s.role}</span>` },
+    { label:'Status',       render:s=>`<span class="cmp-value" style="text-transform:capitalize;">${s.status.replace(/-/g,' ')}</span>` },
+    { label:'Crew',         render:s=>`<span class="cmp-value">${s.crewMin==null?'—':(s.crewMin===s.crewMax? s.crewMin : s.crewMin+'–'+s.crewMax)}</span>` },
+    { label:'Cargo (SCU)',  render:s=>`<span class="cmp-value">${fmt(s.cargoSCU)}</span>` },
+    { label:'SCM Speed',    render:s=>`<span class="cmp-value">${s.scmSpeed?fmt(s.scmSpeed):'—'} m/s</span>` },
+    { label:'Max Speed',    render:s=>`<span class="cmp-value">${s.maxSpeed?fmt(s.maxSpeed):'—'} m/s</span>` },
+    { label:'Length',       render:s=>`<span class="cmp-value">${s.length??'—'} m</span>` },
+    { label:'Beam',         render:s=>`<span class="cmp-value">${s.beam??'—'} m</span>` },
+    { label:'Height',       render:s=>`<span class="cmp-value">${s.height??'—'} m</span>` },
+    { label:'Hull HP',      render:s=>`<span class="cmp-value">${s.health?fmt(s.health):'—'}</span>` },
+    { label:'Shield HP',    render:s=>`<span class="cmp-value">${s.shieldHP?fmt(s.shieldHP):'—'}</span>` },
+    { label:'Mass',         render:s=>`<span class="cmp-value">${s.mass?fmt(s.mass):'—'} kg</span>` },
+    { label:'Boost Fwd',    render:s=>`<span class="cmp-value">${s.boostForward!=null?fmt(s.boostForward):'—'} m/s</span>` },
+    { label:'Pitch',        render:s=>`<span class="cmp-value">${s.pitch!=null?s.pitch:'—'} °/s</span>` },
+    { label:'Yaw',          render:s=>`<span class="cmp-value">${s.yaw!=null?s.yaw:'—'} °/s</span>` },
+    { label:'Roll',         render:s=>`<span class="cmp-value">${s.roll!=null?s.roll:'—'} °/s</span>` },
+    { label:'Main Accel',   render:s=>`<span class="cmp-value">${s.accelMain!=null?s.accelMain:'—'} G</span>` },
+    { label:'Price',        render:s=>`<span class="cmp-value" style="color:var(--amber);">${formatPrice(s)}</span>` },
+  ];
+
+  grid.innerHTML = rows.map(row => `
+    <div class="cmp-cell label">${row.label}</div>
+    ${ships.map(s=>`<div class="cmp-cell shipcol">${row.render(s)}</div>`).join('')}
+  `).join('');
+
+  grid.querySelectorAll('.cmp-remove').forEach(btn=>btn.addEventListener('click', ()=>{
+    toggleCompare(btn.dataset.removeId);
+    renderCompareGrid();
+    renderCompareRadar();
+  }));
+}
+
+/* Attach a listener only if the element exists. Prevents one missing element
+   from throwing and halting all remaining initialisation. */
+function on(id, evt, fn){
+  const el = document.getElementById(id);
+  if(el) el.addEventListener(evt, fn);
+  else console.warn('VERSEDEX: missing element #' + id);
+}
+
+document.getElementById('search').addEventListener('input', (e)=>{ activeQuery = e.target.value; renderList(); });
+document.getElementById('sort').addEventListener('change', (e)=>{ sortKey = e.target.value; renderList(); });
+document.getElementById('hangar-toggle').addEventListener('click', ()=>{
+  viewingHangar = !viewingHangar;
+  const btn = document.getElementById('hangar-toggle');
+  const label = document.getElementById('hangar-toggle-label');
+  btn.classList.toggle('active', viewingHangar);
+  label.textContent = viewingHangar ? 'ALL SHIPS' : 'HANGAR';
+  renderList();
+});
+document.getElementById('cargo-filter').addEventListener('input', (e)=>{
+  minCargoFilter = Number(e.target.value);
+  document.getElementById('cargo-filter-val').textContent = minCargoFilter >= 1000 ? '1000+' : minCargoFilter;
+  renderList();
+});
+document.getElementById('seat-filter-chips').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  seatFilter = btn.dataset.seats;
+  document.querySelectorAll('#seat-filter-chips .chip').forEach(c=>c.classList.toggle('active', c===btn));
+  renderList();
+});
+document.getElementById('exclude-snub-chip').addEventListener('click', ()=>{
+  excludeSnub = !excludeSnub;
+  const b = document.getElementById('exclude-snub-chip');
+  b.classList.toggle('active', excludeSnub);
+  b.textContent = excludeSnub ? '🚫 SNUBS HIDDEN' : '🚫 HIDE SNUBS';
+  renderList();
+});
+[['fmin-scm','fminScm'],['fmin-pitch','fminPitch'],['fmin-yaw','fminYaw'],
+ ['fmin-roll','fminRoll'],['fmin-accel','fminAccel']].forEach(([id,varName])=>{
+  document.getElementById(id).addEventListener('input', (e)=>{
+    const val = Number(e.target.value);
+    if(varName==='fminScm') fminScm = val;
+    else if(varName==='fminPitch') fminPitch = val;
+    else if(varName==='fminYaw') fminYaw = val;
+    else if(varName==='fminRoll') fminRoll = val;
+    else if(varName==='fminAccel') fminAccel = val;
+    document.getElementById(id+'-val').textContent = val;
+    renderList();
+  });
+});
+document.getElementById('exclude-ground-chip').addEventListener('click', (e)=>{
+  excludeGround = !excludeGround;
+  const btn = document.getElementById('exclude-ground-chip');
+  btn.classList.toggle('active', excludeGround);
+  btn.textContent = excludeGround ? '🚫 GROUND VEHICLES HIDDEN' : '🚫 HIDE GROUND VEHICLES';
+  renderList();
+});
+document.getElementById('random-ship-btn').addEventListener('click', ()=>{
+  const pool = getFilteredShips();
+  if(pool.length === 0){
+    setStatus("NO SHIPS MATCH CURRENT FILTERS TO PICK FROM", "error");
+    setTimeout(()=>{ document.getElementById('status-banner').style.display='none'; }, 2500);
+    return;
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  openDetail(pick.id);
+});
+document.getElementById('currency-select').addEventListener('change', (e)=>{
+  activeCurrency = e.target.value;
+  renderList();
+  // Re-render any open views so their prices update too
+  if(document.getElementById('compare-view').classList.contains('open')){
+    renderCompareGrid();
+  }
+});
+/* ---------- URL routing (shareable links) ----------
+   Uses the hash so it works on any static host with no server config:
+     #ship=anvl-arrow   #tools=roi   #brand=Anvil%20Aerospace   #hangar */
+let suppressHashWrite = false;
+
+function setHash(h){
+  if(suppressHashWrite) return;
+  const target = h ? '#' + h : ' ';
+  if(('#'+h) !== window.location.hash){
+    try{ history.replaceState(null, '', target); }
+    catch(err){ window.location.hash = h || ''; }
+  }
+}
+
+function shipHashFor(s){
+  return 'ship=' + encodeURIComponent(s.slug || s.id);
+}
+
+function findShipByHashKey(key){
+  const k = decodeURIComponent(key).toLowerCase();
+  return SHIPS.find(s => (s.slug||'').toLowerCase() === k)
+      || SHIPS.find(s => String(s.id).toLowerCase() === k)
+      || SHIPS.find(s => normaliseShipName(s.name) === normaliseShipName(k));
+}
+
+/* Apply whatever is in the URL. Called on load (after ships arrive) and on
+   back/forward navigation. */
+function applyHashRoute(){
+  const raw = (window.location.hash || '').replace(/^#/, '');
+  if(!raw) return false;
+
+  const [key, value] = raw.split('=');
+  suppressHashWrite = true;
+  try{
+    if(key === 'ship' && value){
+      const ship = findShipByHashKey(value);
+      if(ship){
+        closeAllOverlays();
+        openDetail(ship.id);
+        setActiveNav('ships');
+        return true;
+      }
+      setStatus('SHIP NOT FOUND FOR THIS LINK — SHOWING REGISTRY', 'error');
+      setTimeout(()=>{ const el=document.getElementById('status-banner'); if(el) el.style.display='none'; }, 3500);
+    }else if(key === 'tools'){
+      closeAllOverlays();
+      if(['efficiency','roi','budget','routes','fleet'].includes(value)) activeTool = value;
+      openToolsView();
+      setActiveNav('tools');
+      return true;
+    }else if(key === 'brand' && value){
+      // Legacy links: apply as a manufacturer filter on the registry.
+      const name = decodeURIComponent(value);
+      closeAllOverlays();
+      if(SHIPS.some(s=>s.manufacturer === name)){
+        activeManufacturer = name;
+        const sel = document.getElementById('mfg-filter');
+        if(sel) sel.value = name;
+        renderList();
+      }
+      setActiveNav('ships');
+      return true;
+    }else if(key === 'hangar'){
+      closeAllOverlays();
+      viewingHangar = true;
+      const hb = document.getElementById('hangar-toggle');
+      if(hb) hb.classList.add('active');
+      renderList();
+      setActiveNav('hangar');
+      return true;
+    }else if(key === 'ships'){
+      closeAllOverlays();
+      setActiveNav('ships');
+      return true;
+    }
+  }finally{
+    suppressHashWrite = false;
+  }
+  return false;
+}
+
+/* ---------- Home / landing view ---------- */
+const HOME_FEATURES = [
+  { nav:'ships', title:'Ship Registry',
+    desc:'Every ship and ground vehicle, pulled live. Spec sheets, hardpoints, flight performance, pledge and in-game prices, rent-vs-buy break-even and loaner ships.',
+    icon:'<path d="M3 17l9-13 9 13"/><path d="M3 17c3 2 6 2 9 0s6-2 9 0"/><path d="M12 4v13"/>' },
+  { nav:'filters', title:'Advanced Filters',
+    desc:'Narrow by role, seat count, medbed tier, cargo grid, hardpoint size, component type, or minimum flight performance. Hide ground vehicles and snubs.',
+    icon:'<path d="M3 5h18M6 12h12M10 19h4"/>' },
+  { nav:'compare', title:'Compare Ships',
+    desc:'Put up to four ships side by side with a radar chart across speed, agility, acceleration, hull, shields and cargo.',
+    icon:'<path d="M12 3v18"/><path d="M5 8h4M5 12h4M5 16h4M15 8h4M15 12h4M15 16h4"/>' },
+  { nav:'hangar', title:'My Hangar',
+    desc:'Track the ships you own. Star anything in the registry, or paste your fleet list to import it in one go. Saved on your device.',
+    icon:'<path d="M12 3l-8 6v12h16V9z"/><path d="M9 21v-6h6v6"/>' },
+  { nav:'tools', title:'Tools & Calculators',
+    desc:'What you can afford right now, cargo efficiency leaderboards, an ROI calculator for earning ships in-game, live trade routes and fleet totals.',
+    icon:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/>' },
+  { nav:'install', title:'Add to Home Screen',
+    desc:'Install VERSEDEX so it opens fullscreen like an app, works offline, and your hangar stops being cleared by the browser.',
+    icon:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 7v8M9 12l3 3 3-3"/>' }
+];
+
+function openHomeView(){
+  renderHome();
+  document.getElementById('home-view').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeHomeView(){
+  document.getElementById('home-view').classList.remove('open');
+  syncBodyScroll();
+}
+
+function renderHome(){
+  const shipCount = SHIPS.length;
+  const mfgCount = new Set(SHIPS.map(s=>s.manufacturer)).size;
+  const hangarCount = hangarIds.size;
+
+  document.getElementById('home-body').innerHTML = `
+    <div class="home-hero">
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <div style="width:9px;height:9px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);"></div>
+        <div style="font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:2px; font-size:15px;">VERSE<span style="color:var(--cyan);">DEX</span></div>
+      </div>
+      <h2>Star Citizen <span>Ship Registry</span></h2>
+      <p>A free, community reference for every ship and vehicle in the 'verse — specs, comparisons, prices and tools. Works offline-friendly on your phone, no account needed.</p>
+      <div class="home-stat">
+        <div><div class="hs-n">${shipCount || '—'}</div><div class="hs-l">SHIPS</div></div>
+        <div><div class="hs-n">${mfgCount || '—'}</div><div class="hs-l">BRANDS</div></div>
+        <div><div class="hs-n">${hangarCount}</div><div class="hs-l">IN HANGAR</div></div>
+      </div>
+    </div>
+
+    ${renderInstallCard()}
+
+    ${HOME_FEATURES.map(f=>`
+      <div class="feature-card" data-goto="${f.nav}">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${f.icon}</svg></div>
+        <div class="fc-body">
+          <div class="fc-title">${f.title}</div>
+          <div class="fc-desc">${f.desc}</div>
+        </div>
+        <div class="fc-arrow">›</div>
+      </div>`).join('')}
+
+    <div style="padding:14px 16px 0; display:flex; gap:8px;">
+      <button class="cta" id="replay-tutorial" style="flex:1;">▶ TUTORIAL</button>
+      <button class="cta" id="how-to-install" style="flex:1;">📲 INSTALL GUIDE</button>
+    </div>
+
+    <div class="footnote" style="padding-top:14px;">
+      Data from the community-run star-citizen.wiki API and UEX. Fan-made reference tool — not affiliated
+      with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen® and Roberts Space
+      Industries® are property of Cloud Imperium Rights LLC.
+    </div>
+  `;
+
+  wireInstallCard();
+  const replay = document.getElementById('replay-tutorial');
+  if(replay) replay.addEventListener('click', ()=>openTutorial());
+  const howTo = document.getElementById('how-to-install');
+  if(howTo) howTo.addEventListener('click', showIosInstructions);
+  document.querySelectorAll('.feature-card').forEach(card=>card.addEventListener('click', ()=>{
+    const goto = card.dataset.goto;
+    if(goto === 'filters'){
+      closeHomeView(); setActiveNav('ships');
+      const panel = document.getElementById('adv-filter-panel');
+      if(panel) panel.classList.add('visible');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }else if(goto === 'install'){
+      showIosInstructions();
+    }else if(goto === 'compare'){
+      closeHomeView(); setActiveNav('ships');
+      setStatus('TAP + ON ANY SHIP TO START COMPARING', 'ok');
+      setTimeout(()=>{ const el=document.getElementById('status-banner'); if(el) el.style.display='none'; }, 3500);
+    }else{
+      const navBtn = document.querySelector(`.nav-item[data-nav="${goto}"]`);
+      if(navBtn) navBtn.click();
+    }
+  }));
+}
+
+/* ---------- Bottom navigation ---------- */
+const TOOLS_SEEN_KEY = 'versedex_tools_seen_v1';
+
+function setActiveNav(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===name));
+}
+
+function closeAllOverlays(){
+  ['detail','compare-view','tools-view','home-view'].forEach(id=>{
+    document.getElementById(id).classList.remove('open');
+  });
+  document.body.style.overflow = '';
+}
+
+function updateNavBadges(){
+  const b = document.getElementById('nav-hangar-count');
+  if(b){
+    b.textContent = hangarIds.size;
+    b.classList.toggle('empty', hangarIds.size === 0);
+  }
+}
+
+function markToolsSeen(){
+  try{ localStorage.setItem(TOOLS_SEEN_KEY, '1'); }catch(err){ /* storage may be blocked */ }
+  const dot = document.getElementById('nav-tools-dot');
+  if(dot) dot.classList.add('seen');
+}
+
+const navItems = document.querySelectorAll('.nav-item');
+if(navItems.length === 0){
+  console.warn('VERSEDEX: no .nav-item elements found - navigation will not work');
+}
+navItems.forEach(item=>{
+  item.addEventListener('click', ()=>{
+    const nav = item.dataset.nav;
+    if(nav !== 'home') closeHomeView();
+    if(nav === 'home'){
+      closeAllOverlays();
+      openHomeView();
+      setActiveNav('home');
+    }else if(nav === 'ships'){
+      closeAllOverlays();
+      if(viewingHangar){
+        viewingHangar = false;
+        const hb = document.getElementById('hangar-toggle');
+        hb.classList.remove('active');
+        document.getElementById('hangar-toggle-label').textContent = 'HANGAR';
+        renderList();
+      }
+      setActiveNav('ships');
+    }else if(nav === 'tools'){
+      closeAllOverlays();
+      markToolsSeen();
+      openToolsView();
+      setActiveNav('tools');
+    }else if(nav === 'hangar'){
+      closeAllOverlays();
+      viewingHangar = true;
+      const hb = document.getElementById('hangar-toggle');
+      hb.classList.add('active');
+      document.getElementById('hangar-toggle-label').textContent = 'ALL SHIPS';
+      renderList();
+      setActiveNav('hangar');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  });
+});
+
+// Hide the "new" dot once the user has visited Tools before
+try{
+  if(localStorage.getItem(TOOLS_SEEN_KEY)){
+    const dot = document.getElementById('nav-tools-dot');
+    if(dot) dot.classList.add('seen');
+  }
+}catch(err){ /* storage may be blocked - dot simply stays visible */ }
+
+document.querySelectorAll('.tool-tab').forEach(tab=>tab.addEventListener('click', ()=>{
+  activeTool = tab.dataset.tool;
+  setHash('tools=' + activeTool);
+  renderTools();
+}));
+
+document.getElementById('adv-filter-toggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('adv-filter-panel');
+  const nowOpen = !panel.classList.contains('visible');
+  panel.classList.toggle('visible', nowOpen);
+  // Only give the header its own scroll context while the panel needs it.
+  const hdr = document.querySelector('header');
+  if(hdr) hdr.classList.toggle('panel-open', nowOpen);
+  if(nowOpen){
+    // Bring the panel into view rather than leaving it clipped off-screen.
+    setTimeout(()=>{ panel.scrollIntoView({block:'nearest', behavior:'smooth'}); }, 40);
+  }
+});
+document.getElementById('adv-close').addEventListener('click', ()=>{
+  document.getElementById('adv-filter-panel').classList.remove('visible');
+  const hdr = document.querySelector('header');
+  if(hdr) hdr.classList.remove('panel-open');
+});
+document.getElementById('mfg-filter').addEventListener('change', (e)=>{ activeManufacturer = e.target.value; renderList(); });
+document.getElementById('adv-medbed').addEventListener('change', (e)=>{ advMedbed = e.target.value; renderList(); });
+document.getElementById('adv-bed').addEventListener('change', (e)=>{ advBed = e.target.checked; renderList(); });
+document.getElementById('adv-cargogrid').addEventListener('change', (e)=>{ advCargoGrid = e.target.checked; renderList(); });
+document.getElementById('adv-buyable').addEventListener('change', (e)=>{ advBuyable = e.target.checked; renderList(); });
+document.getElementById('adv-hardpoint-chips').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  advHardpointSize = btn.dataset.hp;
+  document.querySelectorAll('#adv-hardpoint-chips .chip').forEach(c=>c.classList.toggle('active', c===btn));
+  renderList();
+});
+document.getElementById('adv-comp-type').addEventListener('change', (e)=>{ advCompType = e.target.value; renderList(); });
+document.getElementById('adv-comp-size').addEventListener('change', (e)=>{ advCompSize = e.target.value; renderList(); });
+document.getElementById('adv-dock-ship').addEventListener('change', (e)=>{ advDockShip = e.target.value; renderList(); });
+document.getElementById('adv-reset').addEventListener('click', ()=>{
+  activeManufacturer = 'ALL';
+  const mfgSel = document.getElementById('mfg-filter');
+  if(mfgSel) mfgSel.value = 'ALL';
+  advMedbed = 'OFF'; advBed = false; advCargoGrid = false; advBuyable = false; advHardpointSize = 'OFF';
+  fminScm = fminPitch = fminYaw = fminRoll = fminAccel = 0;
+  ['fmin-scm','fmin-pitch','fmin-yaw','fmin-roll','fmin-accel'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.value = 0; }
+    const lbl = document.getElementById(id+'-val');
+    if(lbl){ lbl.textContent = '0'; }
+  });
+  advCompType = 'OFF'; advCompSize = 'OFF'; advDockShip = 'OFF';
+  document.getElementById('adv-medbed').value = 'OFF';
+  document.getElementById('adv-bed').checked = false;
+  document.getElementById('adv-cargogrid').checked = false;
+  document.getElementById('adv-buyable').checked = false;
+  document.getElementById('adv-comp-type').value = 'OFF';
+  document.getElementById('adv-comp-size').value = 'OFF';
+  document.getElementById('adv-dock-ship').value = 'OFF';
+  document.querySelectorAll('#adv-hardpoint-chips .chip').forEach(c=>c.classList.toggle('active', c.dataset.hp==='OFF'));
+  renderList();
+});
+
+loadHangar();
+updateNavBadges();
+// Only show the landing page when there's no deep link to honour.
+if(!(window.location.hash || '').replace(/^#/, '')){
+  openHomeView();
+  if(!tutorialSeen()) openTutorial();
+}
+fetchAllShips();
+window.addEventListener('hashchange', ()=>{ applyHashRoute(); });
+on('ios-sheet-close', 'click', hideIosInstructions);
+on('tut-skip', 'click', closeTutorial);
+on('tut-prev', 'click', ()=>{ if(tutStep > 0){ tutStep--; renderTutorial(); } });
+on('tut-next', 'click', ()=>{
+  if(tutStep < TUT_STEPS.length - 1){ tutStep++; renderTutorial(); }
+  else closeTutorial();
+});
+const iosSheet = document.getElementById('ios-install-sheet');
+if(iosSheet) iosSheet.addEventListener('click', (e)=>{ if(e.target === iosSheet) hideIosInstructions(); });
+
+/* ---------- Animated tutorial ----------
+   CSS-animated mock UI rather than screen recordings: no video assets to host,
+   works offline, and stays accurate if the real UI changes colour/scale. */
+
+
+function tutorialSeen(){
+  try{ return localStorage.getItem(TUTORIAL_SEEN_KEY) === '1'; }catch(err){ return false; }
+}
+function markTutorialSeen(){
+  try{ localStorage.setItem(TUTORIAL_SEEN_KEY, '1'); }catch(err){ /* storage blocked */ }
+}
+
+function openTutorial(fromStart){
+  if(fromStart !== false) tutStep = 0;
+  document.getElementById('tutorial').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderTutorial();
+}
+
+function closeTutorial(){
+  markTutorialSeen();
+  document.getElementById('tutorial').classList.remove('open');
+  syncBodyScroll();
+}
+
+function renderTutorial(){
+  const step = TUT_STEPS[tutStep];
+  if(!step) return;
+  const stage = document.getElementById('tut-stage');
+  // Re-assigning innerHTML restarts the CSS animations for this step.
+  stage.innerHTML = step.stage;
+  document.getElementById('tut-title').textContent = step.title;
+  document.getElementById('tut-desc').textContent = step.desc;
+  document.getElementById('tut-dots').innerHTML =
+    TUT_STEPS.map((_,i)=>`<div class="tut-dot ${i===tutStep?'on':''}"></div>`).join('');
+  const prev = document.getElementById('tut-prev');
+  const next = document.getElementById('tut-next');
+  prev.disabled = tutStep === 0;
+  next.textContent = tutStep === TUT_STEPS.length - 1 ? 'GET STARTED' : 'NEXT';
+
+  // Final step offers the install walkthrough directly.
+  const existing = document.getElementById('tut-install');
+  if(existing) existing.remove();
+  if(step.showInstall && !isStandalone()){
+    const btn = document.createElement('button');
+    btn.id = 'tut-install';
+    btn.className = 'cta primary';
+    btn.textContent = '📲 SHOW ME HOW';
+    btn.style.margin = '0 16px 10px';
+    btn.style.width = 'calc(100% - 32px)';
+    btn.addEventListener('click', ()=>{ closeTutorial(); showIosInstructions(); });
+    const navRow = document.querySelector('.tut-nav');
+    if(navRow && navRow.parentNode) navRow.parentNode.insertBefore(btn, navRow);
+  }
+}
+
+/* ---------- Install to home screen ---------- */
+
+function isStandalone(){
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true;
+}
+
+function isIOS(){
+  const ua = navigator.userAgent || '';
+  // iPadOS 13+ reports as Mac, so also check for touch support.
+  return /iPad|iPhone|iPod/.test(ua)
+      || (/Macintosh/.test(ua) && typeof document !== 'undefined' && 'ontouchend' in document);
+}
+
+function installDismissed(){
+  try{ return localStorage.getItem(INSTALL_DISMISSED_KEY) === '1'; }
+  catch(err){ return false; }
+}
+
+function dismissInstall(){
+  try{ localStorage.setItem(INSTALL_DISMISSED_KEY, '1'); }catch(err){ /* storage blocked */ }
+  const card = document.getElementById('install-card');
+  if(card) card.style.display = 'none';
+}
+
+/* Can we offer anything useful? Either a real prompt, or iOS instructions. */
+function canOfferInstall(){
+  if(isStandalone()) return false;      // already installed
+  return !!deferredInstallPrompt || isIOS();
+}
+
+function renderInstallCard(){
+  if(!canOfferInstall() || installDismissed()) return '';
+  const ios = isIOS() && !deferredInstallPrompt;
+  return `
+    <div class="install-card" id="install-card">
+      <div class="ic-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 7v8M9 12l3 3 3-3"/>
+        </svg>
+      </div>
+      <div class="ic-body">
+        <div class="ic-title">Add to Home Screen</div>
+        <div class="ic-desc">${ios
+          ? 'Opens fullscreen like an app, and keeps your hangar from being cleared by Safari.'
+          : 'Install VERSEDEX for fullscreen access and a saved hangar that sticks around.'}</div>
+        <div class="ic-actions">
+          <button class="ic-btn primary" id="install-action">${ios ? 'HOW TO INSTALL' : 'INSTALL'}</button>
+          <button class="ic-btn" id="install-dismiss">NOT NOW</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function showIosInstructions(){
+  const el = document.getElementById('ios-install-sheet');
+  if(!el) return;
+  // The sheet is reachable from Home on any device, so tailor the steps.
+  const body = document.getElementById('ios-sheet-steps');
+  if(body) body.innerHTML = installStepsFor(isIOS() ? 'ios' : 'other');
+  el.classList.add('open');
+}
+
+function installStepsFor(platform){
+  if(platform === 'ios'){
+    return `
+      <div class="ios-step">
+        <div class="ios-num">1</div>
+        <div>Tap the <strong>Share</strong> button in Safari's toolbar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;vertical-align:-3px;margin-left:2px;"><path d="M12 16V3"/><path d="M8 7l4-4 4 4"/><path d="M5 12v8h14v-8"/></svg>
+        </div>
+      </div>
+      <div class="ios-step"><div class="ios-num">2</div><div>Scroll down and choose <strong>Add to Home Screen</strong></div></div>
+      <div class="ios-step"><div class="ios-num">3</div><div>Tap <strong>Add</strong> — VERSEDEX will appear with your other apps</div></div>
+      <div class="tool-note" style="padding:12px 0 0;">
+        Must be done in <strong>Safari</strong> — Chrome on iOS can't add to the home screen.
+        Safari also clears stored data for sites you haven't opened in 7 days, so installing keeps your hangar safe.
+      </div>`;
+  }
+  return `
+    <div class="ios-step"><div class="ios-num">1</div><div>Open the browser menu <strong>⋮</strong> (top-right)</div></div>
+    <div class="ios-step"><div class="ios-num">2</div><div>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong></div></div>
+    <div class="ios-step"><div class="ios-num">3</div><div>Confirm — VERSEDEX opens fullscreen from your launcher</div></div>
+    <div class="tool-note" style="padding:12px 0 0;">
+      On desktop Chrome or Edge, look for the install icon in the address bar instead.
+    </div>`;
+}
+function hideIosInstructions(){
+  const el = document.getElementById('ios-install-sheet');
+  if(el) el.classList.remove('open');
+}
+
+function wireInstallCard(){
+  const action = document.getElementById('install-action');
+  if(action) action.addEventListener('click', async ()=>{
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      try{
+        const choice = await deferredInstallPrompt.userChoice;
+        if(choice && choice.outcome === 'accepted') dismissInstall();
+      }catch(err){ /* prompt already consumed */ }
+      deferredInstallPrompt = null;
+    }else{
+      showIosInstructions();
+    }
+  });
+  const dismiss = document.getElementById('install-dismiss');
+  if(dismiss) dismiss.addEventListener('click', dismissInstall);
+}
+
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Re-render home so the button appears now that we can actually prompt.
+  if(document.getElementById('home-view') &&
+     document.getElementById('home-view').classList.contains('open')){
+    renderHome();
+  }
+});
+
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+  dismissInstall();
+  setStatus('VERSEDEX INSTALLED — LAUNCH IT FROM YOUR HOME SCREEN', 'ok');
+  setTimeout(()=>{ const el=document.getElementById('status-banner'); if(el) el.style.display='none'; }, 4000);
+});
+
+/* ---------- PWA: installable + offline shell ----------
+   Manifest and service worker are generated at runtime as blobs so VERSEDEX
+   stays a single deployable HTML file with no extra assets to upload. */
+(function setupPWA(){
+  const ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230a0e13'/%3E%3Cellipse cx='256' cy='256' rx='176' ry='64' fill='none' stroke='%234fd8e8' stroke-width='14'/%3E%3Cellipse cx='256' cy='256' rx='176' ry='64' fill='none' stroke='%234fd8e8' stroke-width='14' opacity='0.5' transform='rotate(-58 256 256)'/%3E%3Ccircle cx='256' cy='256' r='72' fill='%230a0e13' stroke='%234fd8e8' stroke-width='11'/%3E%3Ccircle cx='432' cy='256' r='18' fill='%23f0a840'/%3E%3C/svg%3E";
+
+  try{
+    const manifest = {
+      name: 'VERSEDEX — Star Citizen Ship Registry',
+      short_name: 'VERSEDEX',
+      description: 'A fast mobile reference for every Star Citizen ship and vehicle.',
+      start_url: './',
+      scope: './',
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#0a0e13',
+      theme_color: '#0a0e13',
+      icons: [
+        { src: ICON, sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+        { src: ICON, sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  }catch(err){
+    console.warn('VERSEDEX: manifest unavailable', err && err.message);
+  }
+
+  // Service worker: cache the app shell so it opens without a connection.
+  // Ship data still needs the network and fails gracefully without it.
+  if('serviceWorker' in navigator && location.protocol === 'https:'){
+    const swCode = `
+      const CACHE = 'versedex-shell-v1';
+      self.addEventListener('install', e=>{ self.skipWaiting(); });
+      self.addEventListener('activate', e=>{
+        e.waitUntil(caches.keys().then(keys=>Promise.all(
+          keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))
+        )).then(()=>self.clients.claim()));
+      });
+      self.addEventListener('fetch', e=>{
+        const req = e.request;
+        if(req.method !== 'GET') return;
+        const url = new URL(req.url);
+        // Never cache API calls - ship and route data must stay current.
+        if(url.hostname.includes('star-citizen.wiki') || url.hostname.includes('uexcorp')) return;
+        if(url.origin !== location.origin) return;
+        e.respondWith(
+          fetch(req).then(res=>{
+            const copy = res.clone();
+            caches.open(CACHE).then(c=>c.put(req, copy)).catch(()=>{});
+            return res;
+          }).catch(()=> caches.match(req).then(hit=> hit || caches.match('./')))
+        );
+      });
+    `;
+    try{
+      const swUrl = URL.createObjectURL(new Blob([swCode], {type:'text/javascript'}));
+      navigator.serviceWorker.register(swUrl, {scope:'./'})
+        .catch(err=>console.warn('VERSEDEX: service worker not registered —', err && err.message));
+    }catch(err){
+      console.warn('VERSEDEX: service worker unavailable', err && err.message);
+    }
+  }
+})();
+document.getElementById('compare-bar').addEventListener('click', openCompareView);
+</script>
+
+</body>
+</html>
